@@ -3,6 +3,7 @@ import { TouchableOpacity, Text, StyleSheet } from "react-native";
 // import { LinearGradient } from "expo-linear-gradient";
 import LinearGradient from 'react-native-linear-gradient';
 import { useResponsive } from "../Utils/Responsive";
+import Fonts from "../Utils/Fonts";
 interface Props {
   title: string;
   onPress: () => void;
@@ -49,6 +50,8 @@ const styles = StyleSheet.create({
 
   text: {
     color: "#fff",
-    fontWeight: "600",
+    fontWeight: "700",
+     fontSize:16,
+    fontFamily:Fonts.bold,
   },
 });
