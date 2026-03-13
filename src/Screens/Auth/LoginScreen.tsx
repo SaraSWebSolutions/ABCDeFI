@@ -123,8 +123,9 @@ export const LoginScreen = ({ navigation }: any) => {
       {/* Button */}
 
       <GradientButton
-        title="Sign Up"
-        onPress={onLogin}
+        title="Sign In"
+        onPress={()=>navigation.navigate('Home')}
+        // onPress={onLogin}
       />
 
       {/* Divider */}

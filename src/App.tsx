@@ -23,7 +23,6 @@ export default function App() {
       <NavigationContainer>
         <AppNavigator/>
       </NavigationContainer>
-    <HomeScreen />
         <AppKit />
 
     </AppKitProvider>

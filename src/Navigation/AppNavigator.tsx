@@ -6,6 +6,7 @@ import { SplashScreen } from "../Screens/SplashScreen";
 
 import { AuthStackParamList } from "./types";
 import { SignupScreen } from "../Screens/Auth/SignupScreen";
+import HomeScreen from "../HomeScreen";
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
@@ -15,6 +16,7 @@ export default function AppNavigator() {
      <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignupScreen} />
+       <Stack.Screen name="Home" component={HomeScreen} />
     </Stack.Navigator>
   );
 }
