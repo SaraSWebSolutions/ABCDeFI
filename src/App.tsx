@@ -19,11 +19,11 @@ export default function App() {
     <SafeAreaProvider >
 
   <QueryClientProvider client={queryClient}>
-    <AppKitProvider instance={appKit} children={undefined}>
+    <AppKitProvider instance={appKit} >
       <NavigationContainer>
         <AppNavigator/>
       </NavigationContainer>
-    {/* <HomeScreen /> */}
+    <HomeScreen />
         <AppKit />
 
     </AppKitProvider>
