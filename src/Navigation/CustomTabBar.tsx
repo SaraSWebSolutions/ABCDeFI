@@ -99,8 +99,8 @@ export const CustomTabBar = ({ state, navigation }: any) => {
                   marginTop: hp(0.5),
                   fontSize: font(12),
                   fontFamily: Fonts.medium,
-                  
-                  color: isFocused?Colors.primary: "#666",
+
+                  color: isFocused?Colors.primary: "#000",
                 }}
               >
                 {route.name === "AIScreen" ? "59C AI" : route.name}
