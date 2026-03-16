@@ -31,22 +31,38 @@ export const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
+const [errors, setErrors] = useState({
+  email: "",
+  password: ""
+});
+ const onLogin = async () => {
 
-  const onLogin = async () => {
-
-    const emailError = validateEmailOrPhone(email);
-    if (emailError) return Alert.alert(emailError);
-
-    const passError = validatePassword(password);
-    if (passError) return Alert.alert(passError);
-
-    try {
-      Alert.alert("Login Success");
-    } catch (error) {
-      const message = handleError(error);
-      Alert.alert(message);
-    }
+  const newErrors = {
+    email: validateEmailOrPhone(email),
+    password: validatePassword(password),
   };
+
+  setErrors(newErrors);
+
+  const hasError = Object.values(newErrors).some(
+    (error) => error !== ""
+  );
+
+  if (hasError) return;
+
+  try {
+
+    console.log("Login Success");
+
+    navigation.navigate("Home");
+
+  } catch (error) {
+
+    const message = handleError(error);
+    Alert.alert(message);
+
+  }
+};
 
   return (
     <SafeAreaView style={{flex:1}}>
@@ -62,6 +78,7 @@ export const LoginScreen = ({ navigation }: any) => {
           height: hp(20),
           resizeMode: "contain",
           marginBottom: 20,
+          alignSelf:'center',
           marginTop:20,
         }}
       />
@@ -83,14 +100,18 @@ export const LoginScreen = ({ navigation }: any) => {
         placeholder="Phone number or email"
         onChange={setEmail}
       />
-
+{errors.email ? (
+  <Text style={styles.errorText}>{errors.email}</Text>
+) : null}
       <InputField
         value={password}
         placeholder="Password"
         secure={true}
         onChange={setPassword}
       />
-
+{errors.password ? (
+  <Text style={styles.errorText}>{errors.password}</Text>
+) : null}
       {/* Remember + Forgot */}
 
       <View style={styles.row}>
@@ -112,7 +133,7 @@ export const LoginScreen = ({ navigation }: any) => {
 
         </TouchableOpacity>
 
-        <TouchableOpacity>
+        <TouchableOpacity onPress={()=>navigation.navigate('Forgot')}>
           <Text style={styles.forgot}>
             Forgot Password ?
           </Text>
@@ -124,8 +145,8 @@ export const LoginScreen = ({ navigation }: any) => {
 
       <GradientButton
         title="Sign In"
-        onPress={()=>navigation.navigate('Home')}
-        // onPress={onLogin}
+        onPress={()=>navigation.navigate('Main')}
+         //onPress={onLogin}
       />
 
       {/* Divider */}
@@ -211,19 +232,21 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    alignItems: "center",
+    //alignItems: "center",
     backgroundColor: "#F5F5F7"
   },
 
   title: {
     fontWeight: "700",
     marginBottom: 5,
+    textAlign:'center',
     fontFamily:Fonts.bold
   },
 
   subtitle: {
     color: "#777",
     marginBottom: 20,
+    textAlign:'center',
     fontFamily:Fonts.regular
   },
 
@@ -245,7 +268,13 @@ const styles = StyleSheet.create({
     height: 18,
     marginRight: 8,
   },
-
+errorText: {
+  color: "#FF3B30",
+  fontSize: 12,
+  marginTop: 2,
+  marginBottom: 4,
+  fontFamily:Fonts.regular
+},
   rememberText: {
     color: "#6C3BFF",
     marginLeft:8,
@@ -299,6 +328,9 @@ const styles = StyleSheet.create({
     marginTop: 25,
     color: "#555",
      fontSize:14,
+     alignItems:'center',
+     alignSelf:'center',
+     textAlign:'center',
     fontFamily:Fonts.regular,
   },
   dividerRow: {

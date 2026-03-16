@@ -7,7 +7,10 @@ import { SplashScreen } from "../Screens/SplashScreen";
 import { AuthStackParamList } from "./types";
 import { SignupScreen } from "../Screens/Auth/SignupScreen";
 import HomeScreen from "../HomeScreen";
-
+import { OTPVerificationScreen } from "../Screens/Auth/OtpScreen";
+import { ForgotPasswordScreen } from "../Screens/Auth/ForgotPassword";
+import { ResetPasswordScreen } from "../Screens/Auth/ResetPassword";
+import { BottomTabs } from "./BottomTab";
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AppNavigator() {
@@ -16,7 +19,11 @@ export default function AppNavigator() {
      <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignupScreen} />
+       <Stack.Screen name="OtpVerify" component={OTPVerificationScreen} />
+       <Stack.Screen name="Forgot" component={ForgotPasswordScreen} />
+       <Stack.Screen name="Reset" component={ResetPasswordScreen} />
        <Stack.Screen name="Home" component={HomeScreen} />
+       <Stack.Screen name='Main' component={BottomTabs}/>
     </Stack.Navigator>
   );
 }

@@ -88,7 +88,7 @@ export const InputField: React.FC<Props> = ({
 const styles = StyleSheet.create({
 
   container: {
-    marginVertical: 8,
+    marginVertical: 4,
   },
 
   inputContainer: {

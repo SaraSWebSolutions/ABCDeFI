@@ -19,6 +19,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../Utils/Fonts";
 import { Colors } from "../../Utils/Colors";
 
+import {
+  validateUsername,
+  validateMobile,
+  validateEmailOrPhone,
+  validatePassword,
+  validateConfirmPassword,
+  validateDropdown,
+  validateTerms,
+} from "../../Utils/Validators";
+
+
 export const SignupScreen = ({navigation}:any) => {
 
   const { font } = useResponsive();
@@ -39,70 +50,55 @@ export const SignupScreen = ({navigation}:any) => {
 
   const genders = ["Male", "Female", "Other"];
   const countries = ["India", "USA", "UK", "Canada"];
+const [errors, setErrors] = useState({
+  username: "",
+  mobile: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  gender: "",
+  country: "",
+  terms: "",
+  dropdown:''
+});
+ const onRegister = () => {
 
-  const validate = () => {
-
-    if (!username) {
-      Alert.alert("Validation", "Username required");
-      return false;
-    }
-
-    if (!mobile || mobile.length < 10) {
-      Alert.alert("Validation", "Valid mobile number required");
-      return false;
-    }
-
-    const emailRegex =
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(email)) {
-      Alert.alert("Validation", "Invalid email");
-      return false;
-    }
-
-    if (password.length < 6) {
-      Alert.alert("Validation", "Password must be 6 characters");
-      return false;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert("Validation", "Passwords do not match");
-      return false;
-    }
-
-    if (!gender) {
-      Alert.alert("Validation", "Select gender");
-      return false;
-    }
-
-    if (!country) {
-      Alert.alert("Validation", "Select country");
-      return false;
-    }
-
-    if (!agree) {
-      Alert.alert("Validation", "Accept Terms & Privacy");
-      return false;
-    }
-
-    return true;
+  const newErrors = {
+    username: validateUsername(username),
+    mobile: validateMobile(mobile),
+    email: validateEmailOrPhone(email),
+    password: validatePassword(password),
+    confirmPassword: validateConfirmPassword(password, confirmPassword),
+    gender: validateDropdown(gender, "Gender"),
+    country: validateDropdown(country, "Country"),
+    terms: validateTerms(agree),
   };
 
-  const onRegister = () => {
+  setErrors(newErrors);
 
-    if (!validate()) return;
+  const hasError = Object.values(newErrors).some(e => e !== "");
 
-    console.log({
-      username,
-      mobile,
-      email,
-      password,
-      gender,
-      country
-    });
+  if (hasError) return;
 
-    Alert.alert("Success", "Registration successful");
-  };
+  console.log("Register Success");
+
+};
+
+//   const onRegister = () => {
+
+//     if (!validate()) return;
+
+//     console.log({
+//       username,
+//       mobile,
+//       email,
+//       password,
+//       gender,
+//       country
+//     });
+
+//     Alert.alert("Success", "Registration successful");
+//   };
 
   return (
 
@@ -129,21 +125,27 @@ export const SignupScreen = ({navigation}:any) => {
             placeholder="User Name"
             onChange={setUsername}
           />
-
+{errors.username ? (
+  <Text style={styles.errorText}>{errors.username}</Text>
+) : null}
           <InputField
             value={mobile}
             leftIcon="phone-call"
             placeholder="Mobile Number"
             onChange={setMobile}
           />
-
+{errors.mobile ? (
+  <Text style={styles.errorText}>{errors.mobile}</Text>
+) : null}
           <InputField
             value={email}
             leftIcon="mail"
             placeholder="Email Address"
             onChange={setEmail}
           />
-
+{errors.email ? (
+  <Text style={styles.errorText}>{errors.email}</Text>
+) : null}
           <InputField
             value={password}
             leftIcon="lock"
@@ -151,7 +153,9 @@ export const SignupScreen = ({navigation}:any) => {
             secure
             onChange={setPassword}
           />
-
+{errors.password ? (
+  <Text style={styles.errorText}>{errors.password}</Text>
+) : null}
           <InputField
             value={confirmPassword}
             leftIcon="lock"
@@ -159,7 +163,9 @@ export const SignupScreen = ({navigation}:any) => {
             secure
             onChange={setConfirmPassword}
           />
-
+{errors.confirmPassword ? (
+  <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+) : null}
           {/* DROPDOWNS */}
 
           <View style={styles.dropdownRow}>
@@ -194,7 +200,9 @@ export const SignupScreen = ({navigation}:any) => {
                   </TouchableOpacity>
                 ))
               }
-
+{errors.gender ? (
+  <Text style={styles.errorText}>{errors.gender}</Text>
+) : null}
             </View>
 
             {/* Country Dropdown */}
@@ -227,10 +235,13 @@ export const SignupScreen = ({navigation}:any) => {
                   </TouchableOpacity>
                 ))
               }
-
+{errors.country ? (
+  <Text style={styles.errorText}>{errors.country}</Text>
+) : null}
             </View>
 
           </View>
+
 
           {/* Privacy Card */}
 
@@ -286,15 +297,19 @@ export const SignupScreen = ({navigation}:any) => {
   </TouchableOpacity>
 
 </View>
+{errors.terms ? (
+  <Text style={[styles.errorText,{marginBottom: 10}]}>{errors.terms}</Text>
+) : null}
 
           <GradientButton
             title="Next"
-            onPress={onRegister}
+            onPress={()=>navigation.navigate('OtpVerify')}
+            // onPress={onRegister}
           />
 
           <Text style={styles.bottom}>
             Already have an account?
-            <Text onPress={()=>navigation.navigate('Login')} style={{ color: "#6C3BFF",fontSize:14,fontFamily:Fonts.semiBold }}> Log In</Text>
+            <Text onPress={()=>navigation.navigate('Login')} style={{ color: "#6C3BFF",fontSize:14,fontFamily:Fonts.semiBold }}> Sign In</Text>
           </Text>
 
         </ScrollView>
@@ -312,7 +327,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20
   },
-
+errorText: {
+  color: "#FF3B30",
+  fontSize: 12,
+  marginTop: 2,
+  marginBottom: 4,
+  fontFamily:Fonts.regular
+},
   title: {
     fontWeight: "700",
     marginBottom: 8,
