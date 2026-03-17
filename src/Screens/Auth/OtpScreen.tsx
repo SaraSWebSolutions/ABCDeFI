@@ -74,7 +74,7 @@ const verifyOtp = () => {
     if(isforgot){
         navigation.navigate('Reset')
     }else{
-navigation.navigate('Home')
+navigation.navigate('Main')
     }
 
 // const code = otp.join("");

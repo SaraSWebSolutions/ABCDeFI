@@ -10,6 +10,8 @@ import { appKit } from "./Config/appkitconfig"
 import { SafeAreaProvider  } from "react-native-safe-area-context"
 import { NavigationContainer } from "@react-navigation/native"
 import AppNavigator from "./Navigation/AppNavigator"
+import { Provider } from "react-redux";
+import { store } from "./Store/Store"
 const queryClient = new QueryClient()
 export default function App() {
   //  useEffect(() => {
@@ -17,6 +19,7 @@ export default function App() {
   // }, [])
   return ( 
     <SafeAreaProvider >
+<Provider store={store}>
 
   <QueryClientProvider client={queryClient}>
     <AppKitProvider instance={appKit} >
@@ -27,6 +30,8 @@ export default function App() {
 
     </AppKitProvider>
     </QueryClientProvider>
+    </Provider>
+
         </SafeAreaProvider>
 
     )
