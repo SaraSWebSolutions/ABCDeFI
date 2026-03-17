@@ -1,6 +1,6 @@
 import { createAppKit } from '@reown/appkit-react-native';
 import { EthersAdapter } from '@reown/appkit-ethers-react-native';
-import { mainnet, polygon } from 'viem/chains';
+import { mainnet, polygon, bsc, sepolia, bscTestnet } from 'viem/chains';
 import { storage } from '../Utils/StorageUtil.ts';
 
 import { PROJECT_ID } from '@env';
@@ -20,8 +20,8 @@ const ethersAdapter = new EthersAdapter();
 
 export const appKit = createAppKit({
   adapters: [ethersAdapter],
-  networks: [mainnet, polygon],
-  defaultNetwork: mainnet,
+  networks: [bscTestnet],
+  defaultNetwork: bscTestnet,
   projectId,
   metadata,
   storage,

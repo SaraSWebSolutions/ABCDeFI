@@ -1,11 +1,12 @@
-import React from "react";
+import React, { useState } from 'react';
 import {
 View,
 Text,
 StyleSheet,
 Image,
 TouchableOpacity,
-ScrollView
+ScrollView,
+Alert
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
@@ -13,7 +14,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon  from "react-native-vector-icons/Ionicons";
 import { Colors } from "../../Utils/Colors";
 import Fonts from "../../Utils/Fonts";
+import {
+  useAppKit,
+  useAccount,
+  AppKitButton,
+} from '@reown/appkit-react-native';
 export default function HomeScreen({navigation}:any) {
+  const { open, disconnect } = useAppKit();
+  const { address, isConnected, chainId } = useAccount();
+
+  const connectWallet = async () => {
+    try {
+      open();
+    } catch (error) {
+      console.log('Connection error:', error);
+      Alert.alert('Error', 'Failed to connect wallet');
+    }
+  };
 
 return (
 
@@ -91,8 +108,8 @@ style={styles.avatar}
 
 {/* CONNECT WALLET */}
 
-<TouchableOpacity style={styles.walletBtn}>
-<Text style={styles.walletText}>Connect Wallet</Text>
+<TouchableOpacity style={styles.walletBtn} onPress={connectWallet}>
+<Text style={styles.walletText}>{isConnected ? 'Wallet Connected' : 'Connect Wallet'}</Text>
 </TouchableOpacity>
 
 <Text style={styles.joinText}>
