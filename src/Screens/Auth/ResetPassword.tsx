@@ -5,6 +5,7 @@ Text,
 StyleSheet,
 Image,
 ImageBackground,
+Alert,
 } from "react-native";
 
 import { useResponsive } from "../../Utils/Responsive";
@@ -13,11 +14,12 @@ import { GradientButton } from "../../Components/GradientButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../Utils/Fonts";
 import { Colors } from "../../Utils/Colors";
-
-export const ResetPasswordScreen = ({navigation}:any)=>{
-
+import { useDispatch } from "react-redux";
+import { resetPassword } from "../../Store/Slices/authSlice";
+export const ResetPasswordScreen = ({navigation,route}:any)=>{
+const userId=route?.params?.userId
 const { hp,wp,font } = useResponsive();
-
+const dispatch = useDispatch<any>();
 const [password,setPassword] = useState("");
 const [confirm,setConfirm] = useState("");
 const [error,setError] = useState("");
@@ -32,24 +34,45 @@ return "";
 
 };
 
-const updatePassword = ()=>{
+const updatePassword = async () => {
 
-const passError = validatePassword(password);
+  const passError = validatePassword(password);
 
-if(passError){
-setError(passError);
-return;
-}
+  if (passError) {
+    setError(passError);
+    return;
+  }
 
-if(password !== confirm){
-setError("Passwords do not match");
-return;
-}
+  if (password !== confirm) {
+    setError("Passwords do not match");
+    return;
+  }
 
-setError("");
+  setError("");
 
-console.log("Password Updated");
+  try {
+    const payload = {
+      userId: route?.params?.userId, // 👈 from previous screen
+      password: password,
+    };
 
+    const res = await dispatch(resetPassword(payload)).unwrap();
+
+    console.log("Password Reset Success:", res);
+
+    // ✅ Success Alert
+    Alert.alert(res?.message || "Password updated successfully");
+
+    // ✅ Navigate to Login
+    navigation.reset({
+      index: 0,
+      routes: [{ name: "Login" }],
+    });
+
+  } catch (err: any) {
+    console.log("Reset Error:", err);
+    setError(err?.message || "Failed to reset password");
+  }
 };
 
 return(

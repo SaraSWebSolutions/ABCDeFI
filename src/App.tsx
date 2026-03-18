@@ -12,6 +12,8 @@ import { NavigationContainer } from "@react-navigation/native"
 import AppNavigator from "./Navigation/AppNavigator"
 import { Provider } from "react-redux";
 import { store } from "./Store/Store"
+import { Loader } from "./Components/CommanLoader"
+
 const queryClient = new QueryClient()
 export default function App() {
   //  useEffect(() => {
@@ -23,6 +25,7 @@ export default function App() {
 
   <QueryClientProvider client={queryClient}>
     <AppKitProvider instance={appKit} >
+      <Loader/>
       <NavigationContainer>
         <AppNavigator/>
       </NavigationContainer>

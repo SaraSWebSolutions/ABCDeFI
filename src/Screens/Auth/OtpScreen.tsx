@@ -6,16 +6,24 @@ StyleSheet,
 TextInput,
 TouchableOpacity,
 ImageBackground,
-Image
+Image,
+Alert
 } from "react-native";
 
 import { useResponsive } from "../../Utils/Responsive";
 import { GradientButton } from "../../Components/GradientButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../Utils/Fonts";
-
+import { useDispatch, useSelector } from "react-redux";
+import { verifyOtp,resendOtp,verifyForgotOtp  } from "../../Store/Slices/authSlice";
 export const OTPVerificationScreen = ({navigation,route}:any) => {
 const isforgot=route?.params?.isforgot
+const userId=route?.params?.userId
+const dispatch = useDispatch<any>();
+
+const { loading, error: apiError } = useSelector(
+  (state: any) => state.auth
+);
 const { wp, hp, font, radius } = useResponsive();
 
 const [otp, setOtp] = useState(["", "", "", ""]);
@@ -70,24 +78,93 @@ inputs.current[index - 1]?.focus();
 
 };
 
-const verifyOtp = () => {
-    if(isforgot){
-        navigation.navigate('Reset')
-    }else{
-navigation.navigate('Main')
+// const verifyOtp = () => {
+//     if(isforgot){
+//         navigation.navigate('Reset')
+//     }else{
+// navigation.navigate('Main')
+//     }
+
+// // const code = otp.join("");
+
+// // if (code.length < 4) {
+// // setError("Please enter complete OTP");
+// // return;
+// // }
+
+// // console.log("OTP:", code);
+
+// };
+const handleResend = async () => {
+  if (timer > 0) return;
+
+  try {
+    const payload = {
+      userId: route?.params?.userId,
+      
+    };
+
+    const res = await dispatch(resendOtp(payload)).unwrap();
+console.log(res,'res');
+
+    setTimer(90); // reset timer
+    setError("");
+
+  } catch (err: any) {
+    setError(err?.message || "Failed to resend OTP");
+  }
+};
+const verifyOtpHandler = async () => {
+  const code = otp.join("");
+
+  if (code.length < 4) {
+    setError("Please enter complete OTP");
+    return;
+  }
+
+  try {
+    let res;
+
+    if (isforgot) {
+      // 🔥 FORGOT FLOW
+      const payload = {
+        otp: code,
+        userId: route?.params?.userId,
+      };
+
+      res = await dispatch(verifyForgotOtp(payload)).unwrap();
+
+      console.log("Forgot OTP Verified:", res);
+
+      Alert.alert(res.message || "OTP Verified");
+
+      // ✅ ONLY go to Reset
+      navigation.navigate("Reset", {
+        userId: route?.params?.userId,
+      });
+
+    } else {
+      // 🔥 LOGIN FLOW
+      const payload = {
+        otp: code,
+        userId: route?.params?.userId,
+      };
+
+      res = await dispatch(verifyOtp(payload)).unwrap();
+
+      console.log("Login OTP Verified:", res);
+
+      Alert.alert(res.message || "OTP Verified");
+
+      // ✅ ONLY go to Main
+      navigation.replace("Main");
     }
 
-// const code = otp.join("");
-
-// if (code.length < 4) {
-// setError("Please enter complete OTP");
-// return;
-// }
-
-// console.log("OTP:", code);
-
+  } catch (err: any) {
+    console.log("OTP Error:", err);
+    setError(err?.message || "Invalid OTP");
+  }
 };
-
 return (
 
 <SafeAreaView style={{flex:1}}>
@@ -146,22 +223,27 @@ onChangeText={(text)=>handleChange(text,index)}
 {error ? (
 <Text style={styles.error}>{error}</Text>
 ) : null}
-
+<View style={{flexDirection:'row'}}>
 <Text style={styles.resendText}>
 Didn't got the code?
-<Text style={styles.resendLink}>
-{timer > 0 ? ` Resend in ${formatTime()}` : " Resend"}
+
 </Text>
-</Text>
+<TouchableOpacity onPress ={()=>handleResend()} disabled={timer > 0}>
+  <Text style={styles.resendLink}>
+    {timer > 0 ? ` Resend in ${formatTime()}` : " Resend"}
+  </Text>
+</TouchableOpacity>
+</View>
+
 
 <View style={{height:hp(3)}}/>
 
 <GradientButton
-title="Verify"
-onPress={verifyOtp}
+  title={loading ? "Verifying..." : "Verify"}
+  onPress={verifyOtpHandler}
 />
 
-<TouchableOpacity style={[styles.cancelBtn,{height: hp(7),
+<TouchableOpacity  onPress={()=>{navigation.goBack()}}style={[styles.cancelBtn,{height: hp(7),
             width:wp(90)}]}>
 <Text style={[styles.cancelText,{fontSize:font(16)}]}>
 Cancel

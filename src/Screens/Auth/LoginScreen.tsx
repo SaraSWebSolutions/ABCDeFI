@@ -23,6 +23,8 @@ import { handleError } from "../../Utils/ErrorHandler";
 import { Colors } from "../../Utils/Colors";
 import Fonts from "../../Utils/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "../../Store/Slices/authSlice";
 
 export const LoginScreen = ({ navigation }: any) => {
 
@@ -31,6 +33,9 @@ export const LoginScreen = ({ navigation }: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
+  const dispatch = useDispatch<any>();
+
+const { loading, error } = useSelector((state: any) => state.auth);
 const [errors, setErrors] = useState({
   email: "",
   password: ""
@@ -49,18 +54,25 @@ const [errors, setErrors] = useState({
   );
 
   if (hasError) return;
-
+ const payload = email.includes("@")
+      ? { email: email.toLowerCase(), password }
+      : { mobileNumber: email, password };
   try {
+    const res = await dispatch(
+      loginUser(payload)
+    ).unwrap();
 
-    console.log("Login Success");
+    console.log("Login Success:", res);
 
-    navigation.navigate("Home");
+    navigation.navigate("Main");
+    setEmail('')
+    setPassword('')
 
-  } catch (error) {
+  } catch (err: any) {
 
-    const message = handleError(error);
-    Alert.alert(message);
+    console.log("Login Error:", err);
 
+    Alert.alert("Login Failed", err || "Something went wrong");
   }
 };
 
@@ -143,11 +155,15 @@ const [errors, setErrors] = useState({
 
       {/* Button */}
 
-      <GradientButton
+      {/* <GradientButton
         title="Sign In"
         onPress={()=>navigation.navigate('Main')}
          //onPress={onLogin}
-      />
+      /> */}
+      <GradientButton
+  title={loading ? "Signing In..." : "Sign In"}
+  onPress={onLogin}
+/>
 
       {/* Divider */}
 

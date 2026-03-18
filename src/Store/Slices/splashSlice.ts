@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { AuthService } from "../../Services/authService";
+import { showLoader, hideLoader } from "./loaderSlice";
 
 interface SplashState {
   loading: boolean;
@@ -17,14 +18,18 @@ export const fetchSplash = createAsyncThunk(
   "splash/fetchSplash",
   async (_, thunkAPI) => {
     try {
-      const response = await AuthService.splashScreen();
-      return response.data;
+      thunkAPI.dispatch(showLoader());
+
+      const response = await AuthService.getSplash();
+
+      return response;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data || "API Error");
+      return thunkAPI.rejectWithValue(error.message);
+    } finally {
+      thunkAPI.dispatch(hideLoader());
     }
   }
 );
-
 const splashSlice = createSlice({
   name: "splash",
   initialState,

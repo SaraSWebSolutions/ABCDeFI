@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect,useState } from "react";
 import {
   View,
   Image,
@@ -11,16 +11,45 @@ import { useResponsive } from "../Utils/Responsive";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../Utils/Fonts";
 import { Colors } from "../Utils/Colors";
-
+import { fetchSplash } from "../Store/Slices/splashSlice";
+import { useDispatch,useSelector } from "react-redux";
+import { RootState } from "../Store/store";
 export const SplashScreen = ({ navigation }: any) => {
 
   const { hp, font } = useResponsive();
 
+ const dispatch = useDispatch<any>();
+
+  const { data, loading } = useSelector(
+    (state: RootState) => state.splash
+  );
+
   useEffect(() => {
-    setTimeout(() => {
-      navigation.replace("Login");
-    }, 3000);
+    loadData();
   }, []);
+
+  const loadData = async () => {
+    try {
+      await dispatch(fetchSplash()).unwrap();
+
+      setTimeout(() => {
+        navigation.replace("Login");
+      }, 3000);
+
+    } catch (error) {
+      console.log("Splash API Error:", error);
+      //navigation.replace("Login");
+    }
+  };
+
+  // format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+    });
+  };
 
   return (
 <SafeAreaView style={{flex:1}}>
@@ -32,28 +61,40 @@ export const SplashScreen = ({ navigation }: any) => {
       <View style={styles.container}>
 
         <Image
-          source={require("../../assets/Images/splash_logo.png")}
+          source={
+              data?.data?.[0]?.image
+                ? {
+                    uri: `https://abcdefi.srv1252888.hstgr.cloud/uploads/${data?.data?.[0].image}`,
+                  }
+                : require("../../assets/Images/splash_logo.png")
+            }
           style={{
             marginTop:hp(23),
-            height: hp(22),
+            height: hp(24),
+            width: hp(24), 
             resizeMode: "contain",
             alignSelf:'center'
           }}
         />
 
         <Text style={styles.icoText}>
-          ICO Starts on <Text style={styles.highlight}>1st JULY</Text>
-        </Text>
+            ICO Starts on{" "}
+            <Text style={styles.highlight}>
+              {data?.icoStartDate
+                ? formatDate(data.icoStartDate)
+                : "Loading..."}
+            </Text>
+          </Text>
   <View style={styles.bottomSection}>
 
-        <Text style={[styles.title, { fontSize: font(32) }]}>
-          Abcdefi
-        </Text>
+         <Text style={[styles.title, { fontSize: font(32) }]}>
+              {data?.data?.[0]?.title}
+            </Text>
 
-        <Text style={styles.subtitle}>
-          Absolute Blend of Centralized and Decentralized
-          Finance Finance Redefined..
-        </Text>
+            {/* CAPTION */}
+            <Text style={styles.subtitle}>
+              {data?.data?.[0]?.caption || "Loading..."}
+            </Text>
 </View>
       </View>
     </ImageBackground>

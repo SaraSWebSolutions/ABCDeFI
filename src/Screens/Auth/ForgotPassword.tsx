@@ -14,9 +14,11 @@ import { GradientButton } from "../../Components/GradientButton";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../Utils/Fonts";
 import { Colors } from "../../Utils/Colors";
+import { useDispatch } from "react-redux";
+import { forgotPasswordMobile } from "../../Store/Slices/authSlice";
 
 export const ForgotPasswordScreen = ({navigation}:any) => {
-
+const dispatch = useDispatch<any>();
 const { hp,wp, font } = useResponsive();
 
 const [method,setMethod] = useState("email");
@@ -31,26 +33,60 @@ const validatePhone = (phone:string)=>{
 return /^[0-9]{10}$/.test(phone);
 };
 
-const sendOtp = ()=>{
+const sendOtp = async () => {
 
-// if(method==="email"){
-// if(!validateEmail(value)){
-// setError("Enter valid email");
-// return;
-// }
-// }
+  // 🔹 EMAIL FLOW (optional - if API exists)
+  if (method === "email") {
+    if (!validateEmail(value)) {
+      setError("Enter valid email");
+      return;
+    }
 
-// if(method==="sms"){
-// if(!validatePhone(value)){
-// setError("Enter valid phone number");
-// return;
-// }
-// }
+    setError("");
 
-// setError("");
+    // 👉 If you have email API, call here
+    navigation.navigate("OtpVerify", {
+      contact: value,
+      isforgot: true,
+      type: "email"
+    });
 
-navigation.navigate("OtpVerify",{contact:value,isforgot:true});
+    return;
+  }
 
+  // 🔹 MOBILE FLOW (API CALL)
+  if (method === "sms") {
+
+    if (!validatePhone(value)) {
+      setError("Enter valid phone number");
+      return;
+    }
+
+    setError("");
+
+    try {
+      const res = await dispatch(
+        forgotPasswordMobile({
+          mobileNumber: value   // ✅ match API key
+        })
+      ).unwrap();
+
+      console.log("Forgot Success:", res);
+
+      // 👉 Navigate after success
+      navigation.navigate("OtpVerify", {
+        contact: value,
+        isforgot: true,
+        type: "mobile",
+        userId:res?.userId
+      });
+
+    } catch (err: any) {
+      console.log("Forgot Error:", err);
+
+      setError(err?.message || "Failed to send OTP");
+    }
+  }
 };
 
 return(
@@ -124,8 +160,10 @@ style={styles.methodIcon}
 value={value}
 leftIcon={method==="email"?"mail":'phone-call'}
 placeholder={method==="email"?"Email Address":"Phone Number"}
-onChange={setValue}
-/>
+onChange={(text) => {
+  setValue(text);
+  setError("");
+}}/>
 
 {error ? <Text style={styles.error}>{error}</Text>:null}
 
