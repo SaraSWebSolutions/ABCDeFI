@@ -10,8 +10,10 @@ import {
   TextInput,
   Alert,
   Image,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { useResponsive } from '../../Utils/Responsive';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
@@ -22,7 +24,7 @@ import { useActiveAccount } from 'thirdweb/react';
 import { thirdwebClient } from '../../Config/thirdwebConfig';
 import { ethers } from 'ethers';
 import { ethers6Adapter } from 'thirdweb/adapters/ethers6';
-import { bscTestnet } from 'thirdweb/chains';
+import { bscTestnet_custom } from '../../Config/thirdwebConfig';
 import icoABI from '../../abi/ico.json';
 import erc20ABI from '../../abi/ERC20.json';
 
@@ -88,6 +90,8 @@ export default function IcoScreen() {
   const [tokenPrices, setTokenPrices] = useState<{ [key: string]: number }>({});
   const [icoPrice, setIcoPrice] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState('00D : 00H');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [txnHash, setTxnHash] = useState('');
 
   const fetchTokenData = async () => {
     if (!address) {
@@ -209,7 +213,7 @@ export default function IcoScreen() {
 
       const signer = ethers6Adapter.signer.toEthers({
         client: thirdwebClient,
-        chain: bscTestnet,
+        chain: bscTestnet_custom,
         account: account,
       });
 
@@ -217,46 +221,65 @@ export default function IcoScreen() {
       const ICO_contract = new ethers.Contract(ICO_CONTRACT_ADDRESS, icoABI, signer);
 
       if (selectedToken.symbol === "BNB") {
+        Toast.show({
+          type: 'info',
+          text1: 'Transaction Sent',
+          text2: 'Waiting for blockchain confirmation...',
+          visibilityTime: 4000,
+        });
+
         const value = ethers.parseEther(purchaseAmount);
         const tx = await ICO_contract.buyTokenWithNative({ value: value });
         const receipt = await tx.wait();
-        Alert.alert('Success', 'Hash: ' + receipt.hash);
-        fetchTokenData();
 
+        setTxnHash(receipt.hash);
+        setShowSuccessModal(true);
+        fetchTokenData();
       } else {
         const payment_contract = new ethers.Contract(selectedToken.address!, erc20ABI, signer);
         const purchaseAmount_inwei = ethers.parseUnits(purchaseAmount, selectedToken.decimals);
         const allowance = await payment_contract.allowance(user, ICO_CONTRACT_ADDRESS);
 
         if (BigInt(allowance) < BigInt(purchaseAmount_inwei)) {
-          Alert.alert('Info', 'Approving token');
-          setTimeout(async () => {
-            const approveTx = await payment_contract.approve(ICO_CONTRACT_ADDRESS, purchaseAmount_inwei);
-            await approveTx.wait();
-            Alert.alert('Success', 'Approval completed');
-            fetchTokenData();
-          }, 2000);
-        }
-        Alert.alert('Info', 'Buying tokens...');
-        setTimeout(async () => {
-          const txn = await ICO_contract.buyTokenWithERC20(selectedToken.address, purchaseAmount_inwei);
-          const rec = await txn.wait();
-          Alert.alert('Success', 'Hash: ' + rec.hash);
+          Toast.show({
+            type: 'info',
+            text1: 'Approval Required',
+            text2: 'Please confirm the token spend limit in your wallet.',
+          });
+
+          const approveTx = await payment_contract.approve(ICO_CONTRACT_ADDRESS, purchaseAmount_inwei);
+          await approveTx.wait();
+
+          Toast.show({
+            type: 'success',
+            text1: 'Approved!',
+            text2: 'Token spend limit confirmed.',
+          });
           fetchTokenData();
-        }, 5000);
+        }
+
+        Toast.show({
+          type: 'info',
+          text1: 'Processing Purchase',
+          text2: 'Confirming your buy transaction...',
+        });
+
+        const txn = await ICO_contract.buyTokenWithERC20(selectedToken.address, purchaseAmount_inwei);
+        const rec = await txn.wait();
+
+        setTxnHash(rec.hash);
+        setShowSuccessModal(true);
+        fetchTokenData();
       }
     } catch (e: any) {
       console.error('Error:', e);
-      let errorMessage = 'Transaction failed';
+      let errorMessage = 'The transaction was cancelled or failed.';
 
-      if (e.code === 4001) {
-        errorMessage = 'User rejected the transaction';
-      } else if (e.code === -32603) {
-        errorMessage = 'Internal error occurred';
-      } else if (e.message) {
-        errorMessage = e.message;
-      }
-      Alert.alert('Error', errorMessage);
+      Toast.show({
+        type: 'error',
+        text1: 'Transaction Failed',
+        text2: errorMessage,
+      });
     } finally {
       setIsPurchasing(false);
     }
@@ -384,7 +407,7 @@ export default function IcoScreen() {
                     ? ((parseFloat(purchaseAmount) * tokenPrices[selectedToken.symbol]) / icoPrice).toFixed(2)
                     : '0.00'}
                 </Text>
-                <Text style={styles.swapInputSecondary}>Allocation: 0.12%</Text>
+                <Text style={styles.swapInputSecondary}>GasFee :~ $0.10</Text>
               </View>
 
               <View style={[styles.tokenPill, { paddingRight: space(4) }]}>
@@ -535,6 +558,50 @@ export default function IcoScreen() {
           </View>
         </Modal>
 
+        {/* SUCCESS MODAL */}
+        <Modal
+          visible={showSuccessModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setShowSuccessModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { alignItems: 'center', paddingVertical: space(8) }]}>
+              <View style={styles.successIconCircle}>
+                <Icon name="checkmark-circle" size={hp(10)} color="#4ade80" />
+              </View>
+
+              <Text style={styles.successTitle}>Success!</Text>
+              <Text style={styles.successDesc}>
+                Your purchase was successful. The tokens will arrive in your wallet shortly.
+              </Text>
+
+              <View style={styles.txnHashSection}>
+                <Text style={styles.txnHashLabel}>TRANSACTION HASH</Text>
+                <View style={styles.hashLine} />
+                <Text style={styles.txnHashValue} numberOfLines={1} ellipsizeMode="middle">
+                  {txnHash}
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.explorerLink}
+                  onPress={() => Linking.openURL(`https://testnet.bscscan.com/tx/${txnHash}`)}
+                >
+                  <Text style={styles.explorerLinkText}>View on Explorer</Text>
+                  <Feather name="external-link" size={14} color="#7042f8" />
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity
+                style={styles.doneBtn}
+                onPress={() => setShowSuccessModal(false)}
+              >
+                <Text style={styles.doneBtnText}>Great!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+        <Toast />
       </ScrollView>
     </SafeAreaView>
   );
@@ -991,5 +1058,82 @@ const createStyles = (
       color: '#7042f8',
       fontFamily: Fonts.bold,
       fontSize: font(14),
+    },
+    successIconCircle: {
+      width: hp(14),
+      height: hp(14),
+      borderRadius: hp(7),
+      backgroundColor: 'rgba(74, 222, 128, 0.1)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: space(4),
+    },
+    successTitle: {
+      color: '#fff',
+      fontSize: font(24),
+      fontFamily: Fonts.bold,
+      marginBottom: space(2),
+    },
+    successDesc: {
+      color: '#9ca3af',
+      fontSize: font(14),
+      fontFamily: Fonts.medium,
+      textAlign: 'center',
+      paddingHorizontal: space(4),
+      lineHeight: 20,
+      marginBottom: space(6),
+    },
+    txnHashSection: {
+      width: '100%',
+      backgroundColor: '#1b1b1e',
+      borderRadius: radius(4),
+      padding: space(4),
+      marginBottom: space(6),
+      borderWidth: 1,
+      borderColor: '#2d2d33',
+    },
+    txnHashLabel: {
+      color: '#6b7280',
+      fontSize: font(10),
+      fontFamily: Fonts.bold,
+      letterSpacing: 1,
+      marginBottom: space(2),
+    },
+    hashLine: {
+      height: 1,
+      backgroundColor: '#2d2d33',
+      marginBottom: space(3),
+    },
+    txnHashValue: {
+      color: '#d1d5db',
+      fontSize: font(12),
+      fontFamily: Fonts.medium,
+      marginBottom: space(3),
+    },
+    explorerLink: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: 'rgba(112, 66, 248, 0.1)',
+      paddingVertical: space(2),
+      borderRadius: radius(2),
+    },
+    explorerLinkText: {
+      color: '#7042f8',
+      fontSize: font(13),
+      fontFamily: Fonts.bold,
+      marginRight: space(2),
+    },
+    doneBtn: {
+      width: '100%',
+      backgroundColor: '#7042f8',
+      paddingVertical: space(4),
+      borderRadius: radius(3),
+      alignItems: 'center',
+    },
+    doneBtnText: {
+      color: '#fff',
+      fontSize: font(16),
+      fontFamily: Fonts.bold,
     },
   });
