@@ -14,23 +14,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Icon  from "react-native-vector-icons/Ionicons";
 import { Colors } from "../../Utils/Colors";
 import Fonts from "../../Utils/Fonts";
-import {
-  useAppKit,
-  useAccount,
-  AppKitButton,
-} from '@reown/appkit-react-native';
+import { ConnectButton, useActiveAccount, useDisconnect } from 'thirdweb/react';
+import { thirdwebClient,activeChain,chains } from '../../Config/thirdwebConfig';
+import { connectButtonConfig } from '../../Config/walletConfig';
+import { bsc, bscTestnet, polygon } from 'thirdweb/chains';
 export default function HomeScreen({navigation}:any) {
-  const { open, disconnect } = useAppKit();
-  const { address, isConnected, chainId } = useAccount();
+  const { disconnect } = useDisconnect();
+  const account = useActiveAccount();
+  const address = account?.address;
+  const isConnected = !!account;
 
-  const connectWallet = async () => {
-    try {
-      open();
-    } catch (error) {
-      console.log('Connection error:', error);
-      Alert.alert('Error', 'Failed to connect wallet');
-    }
-  };
 
 return (
 
@@ -107,10 +100,21 @@ style={styles.avatar}
 
 
 {/* CONNECT WALLET */}
+  <View style={{marginTop:25}}>
+    
+        <ConnectButton 
+          client={thirdwebClient}
+          {...connectButtonConfig}
+          chain={activeChain}
+          chains={chains}
+        />  
+    </View>
 
-<TouchableOpacity style={styles.walletBtn} onPress={connectWallet}>
-<Text style={styles.walletText}>{isConnected ? 'Wallet Connected' : 'Connect Wallet'}</Text>
-</TouchableOpacity>
+{/* {isConnected && address && (
+<Text style={styles.walletAddress}>
+  {`${address.slice(0,6)}....${address.slice(-4)}`}
+</Text>
+)} */}
 
 <Text style={styles.joinText}>
 Join ICO Before Timer Ends
@@ -391,6 +395,15 @@ walletText:{
 color:"#fff",
 fontSize:17,
 fontFamily:Fonts.semiBold,
+},
+
+walletAddress:{
+color:"#fff",
+fontSize:14,
+fontFamily:Fonts.regular,
+marginTop:10,
+textAlign:"center",
+opacity:0.8
 },
 
 joinText:{

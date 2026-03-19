@@ -9,8 +9,14 @@ module.exports = {
       "module:react-native-dotenv",
       {
         moduleName: "@env",
-        path: ".env"
+        path: ".env",
+        blacklist: null,
+        whitelist: null,
+        safe: false,
+        allowUndefined: true,
+        verbose: false
       }
-    ]
+    ],
+    "@babel/plugin-transform-export-namespace-from"
   ]
 };

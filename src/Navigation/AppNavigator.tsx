@@ -6,7 +6,7 @@ import { SplashScreen } from "../Screens/SplashScreen";
 
 import { AuthStackParamList } from "./types";
 import { SignupScreen } from "../Screens/Auth/SignupScreen";
-import HomeScreen from "../HomeScreen";
+// import HomeScreen from "../HomeScreen";
 import { OTPVerificationScreen } from "../Screens/Auth/OtpScreen";
 import { ForgotPasswordScreen } from "../Screens/Auth/ForgotPassword";
 import { ResetPasswordScreen } from "../Screens/Auth/ResetPassword";
@@ -23,7 +23,7 @@ export default function AppNavigator() {
        <Stack.Screen name="OtpVerify" component={OTPVerificationScreen} />
        <Stack.Screen name="Forgot" component={ForgotPasswordScreen} />
        <Stack.Screen name="Reset" component={ResetPasswordScreen} />
-       <Stack.Screen name="Home" component={HomeScreen} />
+       {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
        <Stack.Screen name='Main' component={BottomTabs}/>
        <Stack.Screen name='SettingsScreen' component={SettingsScreen}/>
     </Stack.Navigator>

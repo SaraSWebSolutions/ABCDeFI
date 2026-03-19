@@ -8,8 +8,6 @@
 //  */
 // const config = {};
 
-// module.exports = mergeConfig(getDefaultConfig(__dirname), config);
-
 const { getDefaultConfig } = require('@react-native/metro-config')
 
 const config = getDefaultConfig(__dirname)
@@ -20,5 +18,13 @@ config.resolver.extraNodeModules = {
   buffer: require.resolve('buffer'),
   process: require.resolve('process'),
 }
+
+// ADD THESE 2 PROPERTIES for thirdweb
+config.resolver.unstable_enablePackageExports = true
+config.resolver.unstable_conditionNames = [
+  "react-native",
+  "browser",
+  "require",
+]
 
 module.exports = config
