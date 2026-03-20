@@ -1,4 +1,4 @@
-import React,{useState} from "react";
+import React,{useState,useEffect} from "react";
 import {
 View,
 Text,
@@ -6,7 +6,8 @@ StyleSheet,
 Image,
 TextInput,
 TouchableOpacity,
-ScrollView
+ScrollView,
+Alert
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
@@ -15,11 +16,18 @@ import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useResponsive } from "../Utils/Responsive";
 import Fonts from "../Utils/Fonts";
-
+import { useDispatch, useSelector } from "react-redux";
+import { fetchProfile ,updateProfile} from "../Store/Slices/profileSlice";
+import { RootState } from "../Store/Store";
+import { logoutUser } from "../Store/Slices/authSlice";
 export default function SettingsScreen({navigation}:any) {
 
 const { wp, hp, font, radius, space } = useResponsive();
+ const dispatch = useDispatch<any>();
 
+const { profileData, loading } = useSelector(
+  (state: RootState) => state.profile
+);
 const styles = createStyles(wp,hp,font,radius,space);
 const [name,setName] = useState("Stephan Joseph");
 const [email,setEmail] = useState("*******@gmail.com");
@@ -27,6 +35,48 @@ const [phone,setPhone] = useState("*****2565789");
 const [address,setAddress] = useState("*************");
 const [city,setCity] = useState("Hydrabad");
 const [country,setCountry] = useState("India");
+useEffect(() => {
+  dispatch(fetchProfile());
+}, []);
+useEffect(() => {
+  if (profileData) {
+    const user = profileData;
+
+    setName(user.name || "");
+    setEmail(user.email || "");
+    setPhone(String(user.mobileNumber || ""));
+    setCountry(user.country || "");
+  }
+}, [profileData]);
+const handleLogout = () => {
+  Alert.alert(
+    "Logout",
+    "Are you sure you want to logout?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await dispatch(logoutUser()).unwrap();
+
+            navigation.reset({
+              index: 0,
+              routes: [{ name: "Login" }],
+            });
+
+          } catch (err) {
+            console.log("Logout error:", err);
+          }
+        },
+      },
+    ]
+  );
+};
 return (
 
 <SafeAreaView style={{flex:1,backgroundColor:"#fff"}}>
@@ -95,11 +145,11 @@ value={phone}
 onChangeText={setPhone}
 />
 
-<Field
+{/* <Field
 label="Address"
 value={address}
 onChangeText={setAddress}
-/>
+/> */}
 
 <Field
 label="City/Area"
@@ -123,6 +173,8 @@ onChangeText={setCountry}
 <MenuItem icon="bank" text="Account Settings" />
 <MenuItem icon="headset" text="Support & FAQ" />
 <MenuItem icon="shield-outline" text="Security Settings" />
+<MenuItem  icon="logout" text="Log Out" onPress={handleLogout}/>
+
 
 </View>
 
@@ -191,13 +243,14 @@ color:"#333"
 );
 };
 
-const MenuItem = ({icon,text}:any) => {
+const MenuItem = ({icon,text,onPress}:any) => {
 
 const { wp, hp, font, radius, space } = useResponsive();
 
 return (
 
 <TouchableOpacity
+  onPress={onPress}
 
 style={{
 flexDirection:"row",
@@ -275,8 +328,8 @@ position:"relative"
 },
 
 profile:{
-width:wp(35),
-height:wp(35),
+width:wp(30),
+height:wp(30),
 borderRadius:wp(17.5),
 borderWidth:3,
 borderColor:"#7B3EF0"
@@ -305,7 +358,7 @@ marginTop:hp(2)
 signOut:{
 marginTop:hp(3),
 paddingVertical:hp(2),
-borderRadius:radius(5),
+borderRadius:radius(2),
 alignItems:"center"
 },
 

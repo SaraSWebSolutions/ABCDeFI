@@ -56,26 +56,37 @@ return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 };
 
 const handleChange = (text: string, index: number) => {
+  if (!/^[0-9]?$/.test(text)) return;
 
-if (!/^[0-9]?$/.test(text)) return;
+  let newOtp = [...otp];
+  newOtp[index] = text;
+  setOtp(newOtp);
+  setError("");
 
-let newOtp = [...otp];
-newOtp[index] = text;
-setOtp(newOtp);
-setError("");
-
-if (text && index < 3) {
-inputs.current[index + 1]?.focus();
-}
-
+  // ✅ Move forward only if typed
+  if (text && index < otp.length - 1) {
+    inputs.current[index + 1]?.focus();
+  }
 };
 
 const handleKeyPress = (e: any, index: number) => {
+  if (e.nativeEvent.key === "Backspace") {
+    let newOtp = [...otp];
 
-if (e.nativeEvent.key === "Backspace" && !otp[index] && index > 0) {
-inputs.current[index - 1]?.focus();
-}
+    // ✅ If current box has value → clear it
+    if (otp[index]) {
+      newOtp[index] = "";
+      setOtp(newOtp);
+      return;
+    }
 
+    // ✅ If empty → move back and clear previous
+    if (index > 0) {
+      newOtp[index - 1] = "";
+      setOtp(newOtp);
+      inputs.current[index - 1]?.focus();
+    }
+  }
 };
 
 // const verifyOtp = () => {

@@ -14,6 +14,7 @@ import { Colors } from "../Utils/Colors";
 import { fetchSplash } from "../Store/Slices/splashSlice";
 import { useDispatch,useSelector } from "react-redux";
 import { RootState } from "../Store/store";
+import { IMAGE_URL } from "@env";
 export const SplashScreen = ({ navigation }: any) => {
 
   const { hp, font } = useResponsive();
@@ -38,6 +39,9 @@ export const SplashScreen = ({ navigation }: any) => {
 
     } catch (error) {
       console.log("Splash API Error:", error);
+      setTimeout(() => {
+        navigation.replace("Login");
+      }, 3000);
       //navigation.replace("Login");
     }
   };
@@ -64,7 +68,7 @@ export const SplashScreen = ({ navigation }: any) => {
           source={
               data?.data?.[0]?.image
                 ? {
-                    uri: `https://abcdefi.srv1252888.hstgr.cloud/uploads/${data?.data?.[0].image}`,
+                    uri: `${IMAGE_URL}${data?.data?.[0].image}`,
                   }
                 : require("../../assets/Images/splash_logo.png")
             }
@@ -93,7 +97,7 @@ export const SplashScreen = ({ navigation }: any) => {
 
             {/* CAPTION */}
             <Text style={styles.subtitle}>
-              {data?.data?.[0]?.caption || "Loading..."}
+              {data?.data?.[0]?.caption }
             </Text>
 </View>
       </View>

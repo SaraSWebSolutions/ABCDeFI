@@ -54,7 +54,25 @@ export const AuthService = {
   resetPassword:async(data:any)=>{
     const response=await api.post('user/password-reset',data);
     return response.data;
-  }
+  },
   
+  //Whitepaper download
+  whitepaper_download:async(data:any)=>{
+const response=await api.get('whitePaper/',data);
+    return response.data;
+  },
+
+  // profile
+  profile:async()=>{
+    const response=await api.post('user/profile');
+    return response.data;
+  },
+
+  //Update profile 
+   update_profile:async(data:any)=>{
+    const response=await api.post('profile-update',data);
+    return response.data;
+  }
+
 
 };

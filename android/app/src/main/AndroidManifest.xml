@@ -1,6 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- For downloading files (Android 12 and below) -->
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="28" />
+
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+<!-- For Android 13+ (media access) -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+<uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
     <queries>
         <package android:name="io.metamask" />
         <package android:name="com.wallet.crypto.trustapp" />
@@ -21,6 +31,7 @@
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
+        android:requestLegacyExternalStorage="true"
         android:exported="true">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
@@ -34,4 +45,13 @@
         </intent-filter>
       </activity>
     </application>
+    
+ <queries>
+   <intent>
+    <action android:name="android.intent.action.VIEW" />
+    <!-- If you don't know the MIME type in advance, set "mimeType" to "*/*". -->
+   <data android:mimeType="application/pdf" />
+ </intent>
+</queries>
+
 </manifest>

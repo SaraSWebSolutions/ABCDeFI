@@ -219,9 +219,32 @@ const initialState = {
     privacy: null,  
     forgotData: null as any,
     otpVerified_forgot: false,
-    resetSuccess: false,        
+    resetSuccess: false, 
+  
+  whitepaperData: null as any,
+  whitepaperSuccess: false,       
 };
 
+//whitePaper_download
+export const downloadWhitepaper = createAsyncThunk(
+  "auth/downloadWhitepaper",
+  async (data: any, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(showLoader());
+
+      const response = await AuthService.whitepaper_download(data);
+
+      return response;
+
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || "Whitepaper download failed"
+      );
+    } finally {
+      dispatch(hideLoader());
+    }
+  }
+);
 //  SLICE
 const authSlice = createSlice({
   name: "auth",
@@ -358,6 +381,22 @@ const authSlice = createSlice({
   state.loading = false;
   state.error = action.payload;
   state.resetSuccess = false;
+})
+// WHITEPAPER DOWNLOAD
+.addCase(downloadWhitepaper.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+  state.whitepaperSuccess = false;
+})
+.addCase(downloadWhitepaper.fulfilled, (state, action) => {
+  state.loading = false;
+  state.whitepaperData = action.payload;
+  state.whitepaperSuccess = true;
+})
+.addCase(downloadWhitepaper.rejected, (state, action: any) => {
+  state.loading = false;
+  state.error = action.payload;
+  state.whitepaperSuccess = false;
 });
 }
 });

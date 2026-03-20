@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import {
   View,
   Text,
@@ -6,7 +6,12 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  ScrollView
+  ScrollView,
+    Linking ,
+    PermissionsAndroid,
+    Platform,
+    ActivityIndicator
+
 } from "react-native";
 
 import { useResponsive } from "../../Utils/Responsive";
@@ -24,7 +29,11 @@ import { Colors } from "../../Utils/Colors";
 import Fonts from "../../Utils/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../../Store/Slices/authSlice";
+import { loginUser,downloadWhitepaper } from "../../Store/Slices/authSlice";
+import { IMAGE_URL } from "@env";
+import FileViewer from "react-native-file-viewer";
+import ReactNativeBlobUtil from "react-native-blob-util";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const LoginScreen = ({ navigation }: any) => {
 
@@ -40,6 +49,25 @@ const [errors, setErrors] = useState({
   email: "",
   password: ""
 });
+useEffect(() => {
+  loadRememberedUser();
+}, []);
+
+const loadRememberedUser = async () => {
+  try {
+    const savedUser = await AsyncStorage.getItem("rememberUser");
+
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+
+      setEmail(user.email);
+      setPassword(user.password);
+      setRemember(true);
+    }
+  } catch (error) {
+    console.log("Load Error:", error);
+  }
+};
  const onLogin = async () => {
 
   const newErrors = {
@@ -64,18 +92,82 @@ const [errors, setErrors] = useState({
 
     console.log("Login Success:", res);
 
-    navigation.navigate("Main");
-    setEmail('')
+    if (remember) {
+      await AsyncStorage.setItem(
+        "rememberUser",
+        JSON.stringify({ email, password })
+      );
+    } else {
+      await AsyncStorage.removeItem("rememberUser");
+      setEmail('')
     setPassword('')
+    }
+    navigation.navigate("Main");
 
   } catch (err: any) {
 
     console.log("Login Error:", err);
 
-    Alert.alert("Login Failed", err || "Something went wrong");
+    Alert.alert("Login Failed", err.message || "Something went wrong");
   }
 };
+const requestStoragePermission = async () => {
+  if (Platform.OS !== "android") return true;
 
+  try {
+    if (Platform.Version >= 33) {
+      // ✅ Android 13+
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } else {
+      // ✅ Android 12 and below
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    }
+  } catch (err) {
+    console.log("Permission error:", err);
+    return false;
+  }
+};
+const handleDownloadWhitepaper = async () => {
+  try {
+    const res = await dispatch(downloadWhitepaper({})).unwrap();
+
+    const fileName = res?.data?.[0]?.file;
+
+    if (!fileName) {
+      Alert.alert("File not found");
+      return;
+    }
+
+    const fileUrl = encodeURI(IMAGE_URL + fileName);
+
+    console.log("Downloading from:", fileUrl);
+
+    const { config, fs } = ReactNativeBlobUtil;
+
+    await config({
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        title: fileName,
+        description: "Downloading Whitepaper",
+        mime: "application/pdf",
+        mediaScannable: true,
+      },
+    }).fetch("GET", fileUrl);
+
+    Alert.alert("Download started", "Check notification");
+
+  } catch (err: any) {
+    console.log("Download error:", err);
+    Alert.alert("Error", err || "Download failed");
+  }
+};
   return (
     <SafeAreaView style={{flex:1}}>
 
@@ -161,7 +253,7 @@ const [errors, setErrors] = useState({
          //onPress={onLogin}
       /> */}
       <GradientButton
-  title={loading ? "Signing In..." : "Sign In"}
+  title={"Sign In"}
   onPress={onLogin}
 />
 
@@ -199,8 +291,9 @@ const [errors, setErrors] = useState({
 </View>
 
       {/* Whitepaper Card */}
+      {/* {loading?<ActivityIndicator size={'small'} color={Colors.primary}></ActivityIndicator>:null} */}
 
-      <TouchableOpacity style={styles.card}>
+      <TouchableOpacity  onPress={()=>handleDownloadWhitepaper()}style={styles.card}>
 
   <View style={styles.cardLeft}>
 
@@ -272,6 +365,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
+        marginTop:10,
+
   },
 
   rememberRow: {
