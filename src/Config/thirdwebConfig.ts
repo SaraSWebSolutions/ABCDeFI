@@ -24,7 +24,7 @@ export const bscTestnet_custom = /*#__PURE__*/ defineChain({
     symbol: 'tBNB',
   },
   rpcUrls: {
-    default: { http: ['https://bnb-testnet.api.onfinality.io/public'] },
+    default: { http: ['https://bsc-testnet.publicnode.com'] },
   },
   blockExplorers: {
     default: {
@@ -38,8 +38,7 @@ export const bscTestnet_custom = /*#__PURE__*/ defineChain({
       address: '0xca11bde05977b3631167028862be2a173976ca11',
       blockCreated: 17422483,
     },
-  },
-  testnet: true,
+  }
 })
 
 
