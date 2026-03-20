@@ -173,7 +173,7 @@ onChangeText={setCountry}
 <MenuItem icon="bank" text="Account Settings" />
 <MenuItem icon="headset" text="Support & FAQ" />
 <MenuItem icon="shield-outline" text="Security Settings" />
-<MenuItem  icon="logout" text="Log Out" onPress={handleLogout}/>
+{/* <MenuItem  icon="logout" text="Log Out" onPress={handleLogout}/> */}
 
 
 </View>
@@ -181,7 +181,7 @@ onChangeText={setCountry}
 
 {/* SIGN OUT */}
 
-<TouchableOpacity onPress={()=>navigation.navigate('Login')} activeOpacity={0.9}>
+<TouchableOpacity onPress={()=>handleLogout()} activeOpacity={0.9}>
 
 <LinearGradient
 colors={["#7B3EF0","#3F0D97"]}
@@ -243,14 +243,13 @@ color:"#333"
 );
 };
 
-const MenuItem = ({icon,text,onPress}:any) => {
+const MenuItem = ({icon,text}:any) => {
 
 const { wp, hp, font, radius, space } = useResponsive();
 
 return (
 
 <TouchableOpacity
-  onPress={onPress}
 
 style={{
 flexDirection:"row",

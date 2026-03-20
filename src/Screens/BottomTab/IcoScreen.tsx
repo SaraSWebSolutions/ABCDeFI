@@ -110,7 +110,7 @@ export default function IcoScreen() {
         const iPrice = await icoContract.icoPrice();
         setIcoPrice(Number(ethers.formatUnits(iPrice, 18)));
       } catch (e) {
-        console.error('Error fetching ico price:', e);
+        //  console.error('Error fetching ico price:', e);
       }
 
       // Fetch ICO End Time
@@ -129,7 +129,7 @@ export default function IcoScreen() {
           setTimeLeft('Ended');
         }
       } catch (e) {
-        console.error('Error fetching ico end time:', e);
+        //  console.error('Error fetching ico end time:', e);
       }
 
       // Fetch balances and prices for each payment token
@@ -157,7 +157,7 @@ export default function IcoScreen() {
           const [price, decimals] = await icoContract.getTokenPrice(tokenAddr);
           prices[token.symbol] = Number(ethers.formatUnits(price, decimals));
         } catch (err) {
-          console.error(`Error fetching price for ${token.symbol}:`, err);
+          //  console.error(`Error fetching price for ${token.symbol}:`, err);
         }
       }));
 
@@ -224,9 +224,12 @@ export default function IcoScreen() {
         Toast.show({
           type: 'info',
           text1: 'Transaction Sent',
-          text2: 'Waiting for blockchain confirmation...',
+          text2: 'Confirm in your wallet...',
           visibilityTime: 4000,
         });
+
+        // Use await to maintain the try/catch context while still delaying
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         const value = ethers.parseEther(purchaseAmount);
         const tx = await ICO_contract.buyTokenWithNative({ value: value });
@@ -235,6 +238,7 @@ export default function IcoScreen() {
         setTxnHash(receipt.hash);
         setShowSuccessModal(true);
         fetchTokenData();
+
       } else {
         const payment_contract = new ethers.Contract(selectedToken.address!, erc20ABI, signer);
         const purchaseAmount_inwei = ethers.parseUnits(purchaseAmount, selectedToken.decimals);
@@ -245,7 +249,12 @@ export default function IcoScreen() {
             type: 'info',
             text1: 'Approval Required',
             text2: 'Please confirm the token spend limit in your wallet.',
+            visibilityTime: 4000,
           });
+
+          // Delay for toast visibility
+          await new Promise(resolve => setTimeout(resolve, 3000));
+
 
           const approveTx = await payment_contract.approve(ICO_CONTRACT_ADDRESS, purchaseAmount_inwei);
           await approveTx.wait();
@@ -254,15 +263,19 @@ export default function IcoScreen() {
             type: 'success',
             text1: 'Approved!',
             text2: 'Token spend limit confirmed.',
+            visibilityTime: 6000,
           });
           fetchTokenData();
         }
-
+        await new Promise(resolve => setTimeout(resolve, 4000));
         Toast.show({
           type: 'info',
           text1: 'Processing Purchase',
           text2: 'Confirming your buy transaction...',
         });
+
+        // Delay for toast visibility
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
         const txn = await ICO_contract.buyTokenWithERC20(selectedToken.address, purchaseAmount_inwei);
         const rec = await txn.wait();
@@ -272,13 +285,44 @@ export default function IcoScreen() {
         fetchTokenData();
       }
     } catch (e: any) {
-      console.error('Error:', e);
+      //  console.error('Purchase Error:', e);
       let errorMessage = 'The transaction was cancelled or failed.';
+
+      // More robust error message extraction
+      const e_obj = e as any;
+      const errorStr = (
+        e_obj?.message ||
+        e_obj?.reason ||
+        e_obj?.data?.message ||
+        e_obj?.error?.message ||
+        e_obj?.info?.error?.message ||
+        ""
+      ).toLowerCase();
+
+      // Check for user rejection or specific error codes
+      if (
+        errorStr.includes('user rejected') ||
+        errorStr.includes('user denied') ||
+        errorStr.includes('rejected by user') ||
+        errorStr.includes('cancelled') ||
+        e_obj?.code === 'ACTION_REJECTED' ||
+        e_obj?.code === 4001
+      ) {
+        errorMessage = 'Transaction rejected in wallet.';
+      } else if (errorStr.includes('insufficient funds')) {
+        errorMessage = 'Insufficient BNB for gas fees.';
+      } else if (errorStr.includes('execution reverted')) {
+        errorMessage = 'Transaction failed. Check contract constraints.';
+      }
+
+      // Hide any existing toast before showing the error one
+      Toast.hide();
 
       Toast.show({
         type: 'error',
         text1: 'Transaction Failed',
         text2: errorMessage,
+        visibilityTime: 7000
       });
     } finally {
       setIsPurchasing(false);
@@ -601,8 +645,8 @@ export default function IcoScreen() {
             </View>
           </View>
         </Modal>
-        <Toast />
       </ScrollView>
+      <Toast />
     </SafeAreaView>
   );
 }
