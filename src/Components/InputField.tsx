@@ -102,6 +102,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.medium,
     flex: 1,
+    color:'black'
   },
 
   leftIcon: {
