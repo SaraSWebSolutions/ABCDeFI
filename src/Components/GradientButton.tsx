@@ -1,6 +1,5 @@
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
-// import { LinearGradient } from "expo-linear-gradient";
 import LinearGradient from 'react-native-linear-gradient';
 import { useResponsive } from "../Utils/Responsive";
 import Fonts from "../Utils/Fonts";

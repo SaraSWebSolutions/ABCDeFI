@@ -108,7 +108,7 @@ const loadRememberedUser = async () => {
 
     console.log("Login Error:", err);
 
-    Alert.alert("Login Failed", err.message || "Something went wrong");
+    Alert.alert("Login Failed", err.data?.message || "Something went wrong");
   }
 };
 const requestStoragePermission = async () => {

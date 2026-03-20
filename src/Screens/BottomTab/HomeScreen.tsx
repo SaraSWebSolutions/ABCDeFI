@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState ,useCallback} from 'react';
 import {
 View,
 Text,
@@ -6,7 +6,8 @@ StyleSheet,
 Image,
 TouchableOpacity,
 ScrollView,
-Alert
+Alert,
+BackHandler
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
@@ -18,13 +19,41 @@ import { ConnectButton, useActiveAccount, useDisconnect } from 'thirdweb/react';
 import { thirdwebClient,activeChain,chains } from '../../Config/thirdwebConfig';
 import { connectButtonConfig } from '../../Config/walletConfig';
 import { bsc, bscTestnet, polygon } from 'thirdweb/chains';
+import { useDispatch,useSelector } from 'react-redux';
+import { RootState } from '../../Store/Store';
+import { useFocusEffect } from "@react-navigation/native";
 export default function HomeScreen({navigation}:any) {
   const { disconnect } = useDisconnect();
+  const { user, loading } = useSelector(
+  (state: RootState) => state.auth   
+);
   const account = useActiveAccount();
   const address = account?.address;
   const isConnected = !!account;
 
+useFocusEffect(
+  useCallback(() => {
+    const onBackPress = () => {
+      Alert.alert(
+        "Exit App",
+        "Are you sure you want to exit?",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Exit", onPress: () => BackHandler.exitApp() },
+        ]
+      );
+      return true;
+    };
 
+    // ✅ NEW WAY
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      onBackPress
+    );
+
+    return () => subscription.remove(); // ✅ FIXED
+  }, [])
+);
 return (
 
 <SafeAreaView style={{flex:1,backgroundColor:"#fff"}}>
@@ -52,9 +81,10 @@ style={styles.avatar}
 />
 
 <View style={{marginLeft:10}}>
-<Text style={styles.greet}>Good Morning!</Text>
-<Text style={styles.name}>Stephan Joseph</Text>
-</View>
+<Text style={styles.greet}>Welcome back !</Text>
+<Text style={styles.name}>
+  {user?.name || "Guest"}
+</Text></View>
 
 </TouchableOpacity>
 

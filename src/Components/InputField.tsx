@@ -57,7 +57,7 @@ export const InputField: React.FC<Props> = ({
         <TextInput
           value={value}
           placeholder={placeholder}
-          placeholderTextColor={Colors.placeholder}
+          placeholderTextColor={'#888'}
           secureTextEntry={hidePassword}
           onChangeText={onChange}
           onFocus={() => setFocused(true)}
