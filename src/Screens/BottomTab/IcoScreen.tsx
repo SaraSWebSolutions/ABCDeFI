@@ -11,7 +11,10 @@ import {
   Alert,
   Image,
   Linking,
+  Animated,
+  Clipboard,
 } from 'react-native';
+import { useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { useResponsive } from '../../Utils/Responsive';
@@ -20,11 +23,11 @@ import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Jazzicon } from '@arturhoncharuk/react-native-jazzicon';
 import Fonts from '../../Utils/Fonts';
-import { useActiveAccount } from 'thirdweb/react';
-import { thirdwebClient } from '../../Config/thirdwebConfig';
+import { ConnectButton, useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain, useActiveWallet } from 'thirdweb/react';
+import { thirdwebClient, activeChain, chains, bscTestnet_custom } from '../../Config/thirdwebConfig';
+import { connectButtonConfig } from '../../Config/walletConfig';
 import { ethers } from 'ethers';
 import { ethers6Adapter } from 'thirdweb/adapters/ethers6';
-import { bscTestnet_custom } from '../../Config/thirdwebConfig';
 import icoABI from '../../abi/ico.json';
 import erc20ABI from '../../abi/ERC20.json';
 
@@ -79,8 +82,17 @@ const ICO_CONTRACT_ADDRESS = '0xd621d8479Fe77F44A7E644C3FC704D1614C93152';
 export default function IcoScreen() {
   const { wp, hp, font, radius, space } = useResponsive();
   const account = useActiveAccount();
+  const wallet = useActiveWallet();
+  const chain = useActiveWalletChain();
+  const switchChain = useSwitchActiveWalletChain();
   const address = account?.address;
   const isConnected = !!account;
+
+  useEffect(() => {
+    if (isConnected && chain && chain.id !== activeChain.id) {
+      switchChain(activeChain);
+    }
+  }, [isConnected, chain, activeChain, switchChain]);
 
   const [selectedToken, setSelectedToken] = useState<Token>(TOKENS[0]);
   const [purchaseAmount, setPurchaseAmount] = useState('');
@@ -92,11 +104,16 @@ export default function IcoScreen() {
   const [timeLeft, setTimeLeft] = useState('00D : 00H');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [txnHash, setTxnHash] = useState('');
+  const [isBalanceLoading, setIsBalanceLoading] = useState(false);
+  const [abcdBalance, setAbcdBalance] = useState('0.00');
+  const [abcdTokenAddress, setAbcdAddress] = useState<string | null>(null);
 
-  const fetchTokenData = async () => {
+  const fetchTokenData = async (showLoading = true) => {
     if (!address) {
       setTokenBalances({});
+      setAbcdBalance('0.00');
     }
+    if (showLoading) setIsBalanceLoading(true);
 
     try {
       const provider = new ethers.JsonRpcProvider('https://bsc-testnet.publicnode.com');
@@ -109,8 +126,22 @@ export default function IcoScreen() {
       try {
         const iPrice = await icoContract.icoPrice();
         setIcoPrice(Number(ethers.formatUnits(iPrice, 18)));
+
+        // Fetch ABCD Token Address and Balance
+        let abcdAddr = abcdTokenAddress;
+        if (!abcdAddr) {
+          abcdAddr = await icoContract.icoToken();
+          setAbcdAddress(abcdAddr);
+        }
+
+        if (address && abcdAddr) {
+          const abcdContract = new ethers.Contract(abcdAddr, erc20ABI, provider);
+          const bal = await abcdContract.balanceOf(address);
+          setAbcdBalance(ethers.formatUnits(bal, 18));
+        }
+
       } catch (e) {
-        //  console.error('Error fetching ico price:', e);
+        //  console.error('Error fetching ico data:', e);
       }
 
       // Fetch ICO End Time
@@ -163,14 +194,14 @@ export default function IcoScreen() {
 
       if (address) setTokenBalances(balances);
       setTokenPrices(prices);
-    } catch (error) {
-      // console.error('Error fetching data:', error);
+    } finally {
+      setIsBalanceLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTokenData();
-    const interval = setInterval(fetchTokenData, 15000);
+    fetchTokenData(true);
+    const interval = setInterval(() => fetchTokenData(false), 15000);
     return () => clearInterval(interval);
   }, [isConnected, address]);
 
@@ -199,6 +230,38 @@ export default function IcoScreen() {
     }
 
     return true;
+  };
+
+  const SkeletonLoader = () => {
+    const opacity = useRef(new Animated.Value(0.2)).current;
+
+    useEffect(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacity, {
+            toValue: 0.5,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0.2,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, []);
+
+    return (
+      <Animated.View style={{
+        width: wp(18),
+        height: font(12),
+        backgroundColor: '#4b5563',
+        borderRadius: radius(2),
+        opacity: opacity,
+        marginLeft: space(2),
+      }} />
+    );
   };
 
   const buyTokens = async () => {
@@ -237,7 +300,7 @@ export default function IcoScreen() {
 
         setTxnHash(receipt.hash);
         setShowSuccessModal(true);
-        fetchTokenData();
+        fetchTokenData(false);
 
       } else {
         const payment_contract = new ethers.Contract(selectedToken.address!, erc20ABI, signer);
@@ -265,7 +328,7 @@ export default function IcoScreen() {
             text2: 'Token spend limit confirmed.',
             visibilityTime: 6000,
           });
-          fetchTokenData();
+          fetchTokenData(false);
         }
         await new Promise(resolve => setTimeout(resolve, 4000));
         Toast.show({
@@ -282,7 +345,7 @@ export default function IcoScreen() {
 
         setTxnHash(rec.hash);
         setShowSuccessModal(true);
-        fetchTokenData();
+        fetchTokenData(false);
       }
     } catch (e: any) {
       //  console.error('Purchase Error:', e);
@@ -329,6 +392,7 @@ export default function IcoScreen() {
     }
   };
 
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0f0f11' }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
@@ -356,7 +420,7 @@ export default function IcoScreen() {
 
               <View style={styles.addressPill}>
                 <Text style={styles.truncatedAddress}>
-                  {isConnected && address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Connect'}
+                  {isConnected && address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Not Connected'}
                 </Text>
                 <View style={styles.jazziconBox}>
                   {isConnected && address ? (
@@ -385,9 +449,16 @@ export default function IcoScreen() {
             {/* PAY SECTION */}
             <View style={styles.swapSectionHeader}>
               <Text style={styles.swapSectionTitle}>PAY</Text>
-              <Text style={styles.swapSectionSubtitle}>
-                Balance: {tokenBalances[selectedToken.symbol] ? parseFloat(tokenBalances[selectedToken.symbol]).toFixed(4) : '0.00'} {selectedToken.symbol}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={styles.swapSectionSubtitle}>Balance: </Text>
+                {isBalanceLoading ? (
+                  <SkeletonLoader />
+                ) : (
+                  <Text style={styles.swapSectionSubtitle}>
+                    {tokenBalances[selectedToken.symbol] ? parseFloat(tokenBalances[selectedToken.symbol]).toFixed(4) : '0.00'} {selectedToken.symbol}
+                  </Text>
+                )}
+              </View>
             </View>
             <View style={styles.swapInputRow}>
               <View style={styles.swapInputCol}>
@@ -423,11 +494,11 @@ export default function IcoScreen() {
               </View>
 
               <TouchableOpacity style={styles.tokenPill} onPress={() => setShowTokenModal(true)}>
-                {selectedToken.symbol === 'BNB' && <Image source={require('../../assets/Binance.png')} style={styles.pillIcon} />}
-                {selectedToken.symbol === 'USDT' && <Image source={require('../../assets/USDT.png')} style={styles.pillIcon} />}
-                {selectedToken.symbol === 'USDC' && <Image source={require('../../assets/USDC.jpg')} style={styles.pillIcon} />}
-                {selectedToken.symbol === 'WBTC' && <Image source={require('../../assets/Bitcoin.jpg')} style={styles.pillIcon} />}
-                {selectedToken.symbol === 'WETH' && <Image source={require('../../assets/Ethereum.png')} style={styles.pillIcon} />}
+                {selectedToken.symbol === 'BNB' && <Image source={require('../../assets/Binance.png')} style={styles.pillIcon} resizeMode="contain" />}
+                {selectedToken.symbol === 'USDT' && <Image source={require('../../assets/USDT.png')} style={styles.pillIcon} resizeMode="contain" />}
+                {selectedToken.symbol === 'USDC' && <Image source={require('../../assets/USDC.png')} style={[styles.pillIcon, { transform: [{ scale: 1.3 }] }]} resizeMode="contain" />}
+                {selectedToken.symbol === 'WBTC' && <Image source={require('../../assets/Bitcoin.png')} style={[styles.pillIcon, { transform: [{ scale: 1.2 }] }]} resizeMode="contain" />}
+                {selectedToken.symbol === 'WETH' && <Image source={require('../../assets/Ethereum.png')} style={[styles.pillIcon, { transform: [{ scale: 1.5 }] }]} resizeMode="contain" />}
                 <Text style={styles.pillText}>{selectedToken.symbol}</Text>
                 <Icon name="chevron-down" size={14} color="#a1a1aa" />
               </TouchableOpacity>
@@ -454,9 +525,11 @@ export default function IcoScreen() {
                 <Text style={styles.swapInputSecondary}>GasFee :~ $0.10</Text>
               </View>
 
-              <View style={[styles.tokenPill, { paddingRight: space(4) }]}>
-                <Image source={require('../../assets/ABCD.png')} style={styles.pillIcon} />
-                <Text style={styles.pillText}>ABCD</Text>
+              <View style={{ alignItems: 'flex-end' }}>
+                <View style={[styles.tokenPill, { paddingRight: space(4), marginBottom: space(1.5) }]}>
+                  <Image source={require('../../assets/ABCD.png')} style={styles.pillIcon} resizeMode="contain" />
+                  <Text style={styles.pillText}>ABCD</Text>
+                </View>
               </View>
             </View>
 
@@ -468,29 +541,40 @@ export default function IcoScreen() {
               </Text>
             </View>
 
-            <TouchableOpacity
-              style={[styles.buyBtn, (isPurchasing || isInsufficient) && { backgroundColor: '#2d2d30' }]}
-              onPress={buyTokens}
-              disabled={isPurchasing || isInsufficient}
-            >
-              <View style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '100%'
-              }}>
-                <Text style={[styles.buyBtnText, (isPurchasing || isInsufficient) && { color: '#6b7280' }]}>
-                  {isPurchasing ? 'Processing...' : isInsufficient ? 'Insufficient Balance' : 'BUY ABCD'}
-                </Text>
-                {!isPurchasing && !isInsufficient && (
-                  <Image
-                    source={require('../../assets/rocket.png')}
-                    style={{ width: wp(6.5), height: wp(8), marginTop: -6, marginLeft: space(2.5) }}
-                    resizeMode="contain"
-                  />
-                )}
+            {!isConnected ? (
+              <View style={{ marginTop: hp(4) }}>
+                <ConnectButton
+                  client={thirdwebClient}
+                  {...connectButtonConfig}
+                  chain={activeChain}
+                  chains={chains}
+                />
               </View>
-            </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.buyBtn, (isPurchasing || isInsufficient) && { backgroundColor: '#2d2d30' }]}
+                onPress={buyTokens}
+                disabled={isPurchasing || isInsufficient}
+              >
+                <View style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '100%'
+                }}>
+                  <Text style={[styles.buyBtnText, (isPurchasing || isInsufficient) && { color: '#6b7280' }]}>
+                    {isPurchasing ? 'Processing...' : isInsufficient ? 'Insufficient Balance' : 'BUY ABCD'}
+                  </Text>
+                  {!isPurchasing && !isInsufficient && (
+                    <Image
+                      source={require('../../assets/rocket.png')}
+                      style={{ width: wp(6.5), height: wp(8), marginTop: -6, marginLeft: space(2.5) }}
+                      resizeMode="contain"
+                    />
+                  )}
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* ICO PROGRESS */}
@@ -503,6 +587,20 @@ export default function IcoScreen() {
               <View style={styles.progressBarFill} />
             </View>
             <Text style={styles.progressSubInfo}>256M / 1 Billion ABCD</Text>
+          </View>
+
+          {/* ABCD BALANCE BANNER */}
+          <View style={styles.balanceBanner}>
+            <View style={styles.balanceBannerLeft}>
+              <View style={styles.balanceIconBox}>
+                <Image source={require('../../assets/ABCD.png')} style={{ width: wp(10), height: wp(10) }} resizeMode="contain" />
+              </View>
+              <View style={styles.balanceTextCol}>
+                <Text style={styles.balanceTitle}>Your ABCD Balance</Text>
+                <Text style={styles.balanceAmount}>{parseFloat(abcdBalance).toFixed(2)} ABCD</Text>
+                <Text style={styles.balanceSub}>~${(parseFloat(abcdBalance) * 0.00001).toFixed(4)} USD</Text>
+              </View>
+            </View>
           </View>
 
           {/* SIMPLIFIED STATS GRID */}
@@ -542,9 +640,6 @@ export default function IcoScreen() {
             </View>
           </View>
 
-
-
-
         </View>
 
         {/* TOKEN SELECTION MODAL */}
@@ -576,11 +671,11 @@ export default function IcoScreen() {
                   >
                     <View style={styles.tokenOptionLayout}>
                       <View style={styles.tokenIconWrapper}>
-                        {token.symbol === 'BNB' && <Image source={require('../../assets/Binance.png')} style={styles.modalTokenIcon} />}
-                        {token.symbol === 'USDT' && <Image source={require('../../assets/USDT.png')} style={styles.modalTokenIcon} />}
-                        {token.symbol === 'USDC' && <Image source={require('../../assets/USDC.jpg')} style={styles.modalTokenIcon} />}
-                        {token.symbol === 'WETH' && <Image source={require('../../assets/Ethereum.png')} style={styles.modalTokenIcon} />}
-                        {token.symbol === 'WBTC' && <Image source={require('../../assets/Bitcoin.jpg')} style={styles.modalTokenIcon} />}
+                        {token.symbol === 'BNB' && <Image source={require('../../assets/Binance.png')} style={styles.modalTokenIcon} resizeMode="contain" />}
+                        {token.symbol === 'USDT' && <Image source={require('../../assets/USDT.png')} style={styles.modalTokenIcon} resizeMode="contain" />}
+                        {token.symbol === 'USDC' && <Image source={require('../../assets/USDC.png')} style={[styles.modalTokenIcon, { transform: [{ scale: 1.3 }] }]} resizeMode="contain" />}
+                        {token.symbol === 'WETH' && <Image source={require('../../assets/Ethereum.png')} style={[styles.modalTokenIcon, { transform: [{ scale: 1.5 }] }]} resizeMode="contain" />}
+                        {token.symbol === 'WBTC' && <Image source={require('../../assets/Bitcoin.png')} style={[styles.modalTokenIcon, { transform: [{ scale: 1.2 }] }]} resizeMode="contain" />}
                       </View>
 
                       <View style={styles.tokenNameCol}>
@@ -592,7 +687,7 @@ export default function IcoScreen() {
                         <Text style={styles.tokenBalanceText}>
                           {tokenBalances[token.symbol] ? parseFloat(tokenBalances[token.symbol]).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 }) : '0.00'}
                         </Text>
-                        <Text style={styles.tokenBalanceLabel}>Balance</Text>
+                        {/* <Text style={styles.tokenBalanceLabel}>Balance</Text> */}
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -647,7 +742,7 @@ export default function IcoScreen() {
         </Modal>
       </ScrollView>
       <Toast />
-    </SafeAreaView>
+    </SafeAreaView >
   );
 }
 
@@ -796,6 +891,7 @@ const createStyles = (
     swapSectionSubtitle: {
       color: '#6b7280',
       fontSize: font(11),
+      marginTop: hp(1),
       fontFamily: Fonts.regular,
     },
     swapInputRow: {
@@ -831,8 +927,8 @@ const createStyles = (
       borderRadius: radius(5),
     },
     pillIcon: {
-      width: wp(5),
-      height: wp(5),
+      width: wp(7.5),
+      height: wp(7.5),
       marginRight: space(2),
     },
     pillText: {
@@ -860,7 +956,7 @@ const createStyles = (
       height: hp(7),
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: hp(4), // Increased top margin
+      marginTop: hp(4),
     },
     buyBtnText: {
       color: '#fff',
@@ -905,6 +1001,64 @@ const createStyles = (
       marginTop: space(1),
       textAlign: 'right',
       letterSpacing: 0.5,
+    },
+    balanceBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#1a1a1c',
+      padding: space(5),
+      borderRadius: radius(4),
+      marginBottom: hp(4),
+      borderWidth: 1,
+      borderColor: '#2d2d33',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 3,
+    },
+    balanceBannerLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    balanceIconBox: {
+      width: wp(14),
+      height: wp(14),
+      borderRadius: wp(7),
+      backgroundColor: 'rgba(112, 66, 248, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: space(4),
+      borderWidth: 1,
+      borderColor: 'rgba(112, 66, 248, 0.25)',
+    },
+    balanceTextCol: {
+      flex: 1,
+    },
+    balanceTitle: {
+      color: '#6b7280',
+      fontSize: font(12),
+      fontFamily: Fonts.medium,
+      marginBottom: 4,
+      letterSpacing: 0.3,
+    },
+    balanceAmount: {
+      color: '#fff',
+      fontSize: font(20),
+      fontFamily: Fonts.bold,
+      marginBottom: 4,
+      marginLeft: space(2),
+      lineHeight: font(28),
+    },
+    balanceSub: {
+      color: '#7042f8',
+      fontSize: font(13),
+      fontFamily: Fonts.medium,
+      letterSpacing: 0.2,
+    },
+    balanceBannerRight: {
+      alignItems: 'flex-end',
     },
     statsGrid: {
       flexDirection: 'row',
@@ -987,7 +1141,7 @@ const createStyles = (
       paddingHorizontal: space(4),
       paddingVertical: space(5),
       width: '88%',
-      maxHeight: '65%', // Reduced height
+      maxHeight: '65%',
       borderWidth: 1,
       borderColor: '#2d2d33',
     },
@@ -1010,7 +1164,7 @@ const createStyles = (
       borderRadius: radius(3),
       paddingVertical: space(2.5),
       paddingHorizontal: space(3.5),
-      marginBottom: space(2), // Reduced vertical spacing
+      marginBottom: space(2),
       borderWidth: 1,
       borderColor: '#2d2d33',
     },
@@ -1019,7 +1173,7 @@ const createStyles = (
       alignItems: 'center',
     },
     tokenIconWrapper: {
-      width: wp(9.5), // Reduced icon size
+      width: wp(9.5),
       height: wp(9.5),
       borderRadius: wp(5),
       backgroundColor: '#202124',
@@ -1028,8 +1182,8 @@ const createStyles = (
       marginRight: space(3),
     },
     modalTokenIcon: {
-      width: wp(5.5),
-      height: wp(5.5),
+      width: '85%',
+      height: '85%',
     },
     tokenNameCol: {
       flex: 1,
@@ -1178,6 +1332,58 @@ const createStyles = (
     doneBtnText: {
       color: '#fff',
       fontSize: font(16),
+      fontFamily: Fonts.bold,
+    },
+    addTokenBanner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: '#161618',
+      padding: space(4),
+      borderRadius: radius(4),
+      marginBottom: hp(5),
+      borderWidth: 1,
+      borderColor: '#202124',
+      marginTop: hp(2),
+    },
+    addTokenLeft: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    addTokenIconBox: {
+      width: wp(12),
+      height: wp(12),
+      borderRadius: wp(6),
+      backgroundColor: '#1b1b1e',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: space(3),
+      borderWidth: 1,
+      borderColor: '#2d2d33',
+    },
+    addTokenTitle: {
+      color: '#fff',
+      fontSize: font(13),
+      fontFamily: Fonts.bold,
+    },
+    addTokenSub: {
+      color: '#6b7280',
+      fontSize: font(10),
+      fontFamily: Fonts.medium,
+      marginTop: 2,
+    },
+    addTokenBtn: {
+      backgroundColor: 'rgba(112, 66, 248, 0.1)',
+      paddingHorizontal: space(6),
+      paddingVertical: space(2),
+      borderRadius: radius(2),
+      borderWidth: 1,
+      borderColor: 'rgba(112, 66, 248, 0.3)',
+    },
+    addTokenBtnText: {
+      color: '#7042f8',
+      fontSize: font(12),
       fontFamily: Fonts.bold,
     },
   });
