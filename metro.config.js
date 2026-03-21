@@ -17,6 +17,8 @@ config.resolver.extraNodeModules = {
   stream: require.resolve('stream-browserify'),
   buffer: require.resolve('buffer'),
   process: require.resolve('process'),
+  url: require.resolve('url'),
+  path: require.resolve('path-browserify'),
 }
 
 // ADD THESE 2 PROPERTIES for thirdweb

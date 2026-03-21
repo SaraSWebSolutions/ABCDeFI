@@ -425,8 +425,8 @@ export default function IcoScreen() {
               <TouchableOpacity style={styles.tokenPill} onPress={() => setShowTokenModal(true)}>
                 {selectedToken.symbol === 'BNB' && <Image source={require('../../assets/Binance.png')} style={styles.pillIcon} />}
                 {selectedToken.symbol === 'USDT' && <Image source={require('../../assets/USDT.png')} style={styles.pillIcon} />}
-                {selectedToken.symbol === 'USDC' && <Image source={require('../../assets/USDC.png')} style={styles.pillIcon} />}
-                {selectedToken.symbol === 'WBTC' && <Image source={require('../../assets/Bitcoin.png')} style={styles.pillIcon} />}
+                {selectedToken.symbol === 'USDC' && <Image source={require('../../assets/USDC.jpg')} style={styles.pillIcon} />}
+                {selectedToken.symbol === 'WBTC' && <Image source={require('../../assets/Bitcoin.jpg')} style={styles.pillIcon} />}
                 {selectedToken.symbol === 'WETH' && <Image source={require('../../assets/Ethereum.png')} style={styles.pillIcon} />}
                 <Text style={styles.pillText}>{selectedToken.symbol}</Text>
                 <Icon name="chevron-down" size={14} color="#a1a1aa" />
@@ -578,9 +578,9 @@ export default function IcoScreen() {
                       <View style={styles.tokenIconWrapper}>
                         {token.symbol === 'BNB' && <Image source={require('../../assets/Binance.png')} style={styles.modalTokenIcon} />}
                         {token.symbol === 'USDT' && <Image source={require('../../assets/USDT.png')} style={styles.modalTokenIcon} />}
-                        {token.symbol === 'USDC' && <Image source={require('../../assets/USDC.png')} style={styles.modalTokenIcon} />}
+                        {token.symbol === 'USDC' && <Image source={require('../../assets/USDC.jpg')} style={styles.modalTokenIcon} />}
                         {token.symbol === 'WETH' && <Image source={require('../../assets/Ethereum.png')} style={styles.modalTokenIcon} />}
-                        {token.symbol === 'WBTC' && <Image source={require('../../assets/Bitcoin.png')} style={styles.modalTokenIcon} />}
+                        {token.symbol === 'WBTC' && <Image source={require('../../assets/Bitcoin.jpg')} style={styles.modalTokenIcon} />}
                       </View>
 
                       <View style={styles.tokenNameCol}>
