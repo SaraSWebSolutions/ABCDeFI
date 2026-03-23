@@ -8,7 +8,8 @@ import {
   ImageBackground,
   Alert,
   Image,
-  Modal, FlatList
+  Modal, FlatList,
+  TextInput
 } from "react-native";
 
 import { useResponsive } from "../../Utils/Responsive";
@@ -31,13 +32,16 @@ import {
 } from "../../Utils/Validators";
 import { useDispatch, useSelector } from "react-redux";
 import { registerUser, getPrivacy } from "../../Store/Slices/authSlice";
-
+import PhoneInput from "react-native-phone-number-input";
+import {Snackbar} from "react-native-snackbar";
 export const SignupScreen = ({ navigation }: any) => {
 
   const { font } = useResponsive();
   const dispatch = useDispatch<any>();
   const [username, setUsername] = useState("");
-  const [mobile, setMobile] = useState("");
+ const [mobile, setMobile] = useState("");       // full formatted
+const [phone, setPhone] = useState("");         // only number
+const [countryCode, setCountryCode] = useState("91"); // default India
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -45,7 +49,7 @@ export const SignupScreen = ({ navigation }: any) => {
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [gender, setGender] = useState("");
   const [country, setCountry] = useState("");
-
+const [search, setSearch] = useState("");
   const [showGender, setShowGender] = useState(false);
   const [showCountry, setShowCountry] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
@@ -65,6 +69,7 @@ export const SignupScreen = ({ navigation }: any) => {
     terms: "",
     dropdown: ''
   });
+  
   const { privacy, loading } = useSelector(
     (state: any) => state.auth
   );
@@ -72,7 +77,7 @@ export const SignupScreen = ({ navigation }: any) => {
 
     const newErrors = {
       username: validateUsername(username),
-      mobile: validateMobile(mobile),
+      mobile: validateMobile(phone),
       email: validateEmailOrPhone(email),
       password: validatePassword(password),
       confirmPassword: validateConfirmPassword(password, confirmPassword),
@@ -92,7 +97,8 @@ export const SignupScreen = ({ navigation }: any) => {
       const payload = {
         name: username,
         email: email.toLowerCase().trim(),
-        mobileNumber: mobile,
+mobileNumber: phone,
+//countryCode: countryCode,
         password: password,
         gender: gender.toLocaleLowerCase(),
         country: country,
@@ -104,17 +110,26 @@ export const SignupScreen = ({ navigation }: any) => {
 
       // ✅ API CALL via Redux
       const res = await dispatch(registerUser(payload)).unwrap();
-
+// if (res?.otp) {
+//   Snackbar.show({
+//     text: `Your OTP is ${res.otp}`,
+//     duration: Snackbar.LENGTH_LONG,
+//   });
+// }
       console.log("Register Success:", res);
 
-      Alert.alert("Success", res?.message || "Registered Successfully");
-
+Alert.alert(
+  "Success",
+  res?.message
+  // `Registration completed successfully.\n\n Your One-Time Password (OTP): ${res?.otp}`
+);
       // 👉 Navigate (depends on API)
       //navigation.navigate("Login"); 
       // OR
       navigation.navigate("OtpVerify", { isforgot: false, userId: res?._id });
 setUsername("");
 setMobile("");
+setPhone('');
 setEmail("");
 setPassword("");
 setConfirmPassword("");
@@ -129,6 +144,9 @@ setAgree(false);
     }
   };
   const contentList = privacy?.[0]?.content || [];
+  const filteredCountries = countryList.filter((item) =>
+  item.label.toLowerCase().includes(search.toLowerCase())
+);
   return (
 
     <SafeAreaView style={{ flex: 1 }}>
@@ -157,12 +175,48 @@ setAgree(false);
           {errors.username ? (
             <Text style={styles.errorText}>{errors.username}</Text>
           ) : null}
-          <InputField
-            value={mobile}
-            leftIcon="phone-call"
-            placeholder="Mobile Number"
-            onChange={setMobile}
-          />
+         <PhoneInput
+  defaultValue={phone}
+  defaultCode="IN"
+  layout="first"
+  onChangeText={(text) => {
+    setPhone(text); // only number
+  }}
+  textInputProps={{
+    placeholder: "Enter Mobile Number",   // ✅ placeholder here
+    placeholderTextColor: "#999"
+  }}
+  onChangeFormattedText={(text) => {
+    setMobile(text); // +91 9876543210
+  }}
+  onChangeCountry={(country) => {
+    setCountryCode(country.callingCode[0]); // 👈 important
+  }}
+  
+ 
+
+  containerStyle={{
+    width: "100%",
+    height: 55,          
+    borderRadius: 12,
+  }}
+
+  textContainerStyle={{
+    height: 55,          
+    borderTopRightRadius: 12,
+    borderBottomRightRadius: 12,
+    paddingVertical: 0,  
+  }}
+
+  textInputStyle={{
+    height: 55,          
+    fontSize: 14,
+    fontFamily:Fonts.medium,
+    paddingVertical: 7, 
+    marginTop:8,
+  }}
+
+/>
           {errors.mobile ? (
             <Text style={styles.errorText}>{errors.mobile}</Text>
           ) : null}
@@ -355,9 +409,20 @@ setAgree(false);
               </TouchableOpacity>
             </View>
 
+<View style={styles.searchBox}>
+  <Icon name="search-outline" size={18} color="#777" />
+
+  <TextInput
+    placeholder="Search country..."
+    value={search}
+    onChangeText={setSearch}
+    style={styles.searchInput}
+    placeholderTextColor="#999"
+  />
+</View>
             {/* Country List */}
             <FlatList
-              data={countryList} // 👈 use label/value list
+              data={filteredCountries} // 👈 use label/value list
               keyExtractor={(item) => item.value}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => (
@@ -366,6 +431,7 @@ setAgree(false);
                   onPress={() => {
                     setCountry(item.value);
                     setShowCountryModal(false);
+                    setSearch('')
                   }}
                 >
                   <Text style={styles.itemText}>{item.label}</Text>
@@ -629,5 +695,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.medium,
   },
+  searchBox: {
+  flexDirection: "row",
+  alignItems: "center",
+  backgroundColor: "#f5f5f5",
+  borderRadius: 10,
+  paddingHorizontal: 10,
+  marginBottom: 10,
+},
+
+searchInput: {
+  flex: 1,
+  height: 45,
+  marginLeft: 8,
+  fontSize: 14,
+  fontFamily: Fonts.medium,
+},
 
 });

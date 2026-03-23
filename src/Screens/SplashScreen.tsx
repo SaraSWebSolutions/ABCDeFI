@@ -15,6 +15,7 @@ import { fetchSplash } from "../Store/Slices/splashSlice";
 import { useDispatch,useSelector } from "react-redux";
 import { RootState } from "../Store/store";
 import { IMAGE_URL } from "@env";
+import FastImage from "react-native-fast-image";
 export const SplashScreen = ({ navigation }: any) => {
 
   const { hp, font } = useResponsive();
@@ -63,23 +64,25 @@ export const SplashScreen = ({ navigation }: any) => {
       resizeMode="cover"
     >
       <View style={styles.container}>
-
-        <Image
-          source={
-              data?.data?.[0]?.image
-                ? {
-                    uri: `${IMAGE_URL}${data?.data?.[0].image}`,
-                  }
-                : require("../../assets/Images/splash_logo.png")
-            }
-          style={{
-            marginTop:hp(23),
-            height: hp(24),
-            width: hp(24), 
-            resizeMode: "contain",
-            alignSelf:'center'
-          }}
-        />
+<FastImage
+source={require('../../assets/Images/Splash_logo.png')}
+  // source={
+  //   data?.data?.[0]?.image
+  //     ? {
+  //         uri: `${IMAGE_URL}${data?.data?.[0].image}`,
+  //         priority: FastImage.priority.high,
+  //         cache: FastImage.cacheControl.immutable,
+  //       }
+  //     : require("../../assets/Images/Splash_logo.png")
+  // }
+  style={{
+    marginTop: hp(23),
+    height: hp(24),
+    width: hp(24),
+    alignSelf: "center",
+  }}
+  resizeMode={FastImage.resizeMode.contain}
+/>
 
         <Text style={styles.icoText}>
             ICO Starts on{" "}

@@ -12,21 +12,20 @@ export const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
-    // 👉 Build full URL
-    const fullUrl =
-      (config.baseURL || "") +
-      (config.url || "") +
-      (config.params
-        ? "?" +
-          new URLSearchParams(config.params).toString()
-        : "");
-const token = await AsyncStorage.getItem("token");
+    const token = await AsyncStorage.getItem("token");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    console.log("🚀 API Request:", fullUrl);
+    // ✅ AUTO HANDLE FORM DATA
+    if (config.data instanceof FormData) {
+      config.headers["Content-Type"] = "multipart/form-data";
+    } else {
+      config.headers["Content-Type"] = "application/json";
+    }
+
+    console.log("🚀 API Request:", config.url);
     console.log("👉 token:", token);
     console.log("👉 Body:", config.data);
 

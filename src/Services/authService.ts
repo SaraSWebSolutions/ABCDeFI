@@ -70,9 +70,27 @@ const response=await api.get('whitePaper/',data);
 
   //Update profile 
    update_profile:async(data:any)=>{
-    const response=await api.post('profile-update',data);
+    const response=await api.post('user/profile-update',data);
     return response.data;
-  }
+  },
 
+  // timerico
+  timerIco:async()=>{
+    const response=await api.get('ico/');
+    return response.data;
+  },
+
+    //Reward
+  reward:async(data:any)=>{
+      const response=await api.get('reward/',data);
+    return response.data;
+  },
+
+  //rewardStatus 
+
+ rewardStatus:async()=>{
+      const response=await api.post('reward/status-check');
+    return response.data;
+  },
 
 };

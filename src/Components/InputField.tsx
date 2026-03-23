@@ -12,6 +12,8 @@ interface Props {
   secure?: boolean;
   leftIcon?: string;
   onChange: (text: string) => void;
+  editable:boolean;
+  inputStyle: any
 }
 
 export const InputField: React.FC<Props> = ({
@@ -20,6 +22,8 @@ export const InputField: React.FC<Props> = ({
   secure,
   leftIcon,
   onChange,
+  editable,
+  inputStyle,
 }) => {
 
   const { hp, wp, radius } = useResponsive();
@@ -41,6 +45,7 @@ export const InputField: React.FC<Props> = ({
             paddingHorizontal: wp(4),
             borderColor: focused ? Colors.primary : Colors.border,
           },
+          inputStyle,
         ]}
       >
 
@@ -63,6 +68,7 @@ export const InputField: React.FC<Props> = ({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           style={styles.input}
+          editable={editable}
         />
 
         {/* Password Eye */}

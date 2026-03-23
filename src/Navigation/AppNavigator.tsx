@@ -12,6 +12,9 @@ import { ForgotPasswordScreen } from "../Screens/Auth/ForgotPassword";
 import { ResetPasswordScreen } from "../Screens/Auth/ResetPassword";
 import { BottomTabs } from "./BottomTab";
 import SettingsScreen from "../Screens/SettingScreen";
+import { EditProfileScreen } from "../Screens/Editprofile";
+import AccountSettingsScreen from "../Screens/AccoutSettings";
+import HelpSupportScreen from "../Screens/SupportScreen";
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AppNavigator() {
@@ -26,6 +29,9 @@ export default function AppNavigator() {
        {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
        <Stack.Screen name='Main' component={BottomTabs}/>
        <Stack.Screen name='SettingsScreen' component={SettingsScreen}/>
+       <Stack.Screen name='EditProfileScreen' component={EditProfileScreen}/>
+       <Stack.Screen name='AccountSettingsScreen' component={AccountSettingsScreen}/>
+       <Stack.Screen name='HelpSupportScreen' component={HelpSupportScreen}/>
     </Stack.Navigator>
   );
 }

@@ -74,10 +74,10 @@ export const updateProfile = createAsyncThunk<
   User,
   UpdateProfilePayload,
   { rejectValue: string }
->("profile/updateProfile", async (payload, { rejectWithValue }) => {
+>("profile/updateProfile", async (formData, { rejectWithValue }) => {
   try {
     const response: ProfileResponse =
-      await AuthService.update_profile(payload);
+      await AuthService.update_profile(formData);
     return response.data;
   } catch (error: any) {
     return rejectWithValue(

@@ -5,7 +5,8 @@ Text,
 TouchableOpacity,
 StyleSheet,
 Image,
-ImageBackground
+ImageBackground,
+Alert
 } from "react-native";
 
 import { useResponsive } from "../../Utils/Responsive";
@@ -67,13 +68,16 @@ const sendOtp = async () => {
     try {
       const res = await dispatch(
         forgotPasswordMobile({
-          mobileNumber: value   // ✅ match API key
+          mobileNumber: value   // match API key
         })
       ).unwrap();
 
       console.log("Forgot Success:", res);
-
-      // 👉 Navigate after success
+Alert.alert(
+  "Success", res?.message
+  // `Your One-Time Password (OTP): ${res?.otp}`
+);
+      //  Navigate after success
       navigation.navigate("OtpVerify", {
         contact: value,
         isforgot: true,
@@ -83,8 +87,9 @@ const sendOtp = async () => {
 
     } catch (err: any) {
       console.log("Forgot Error:", err);
+      Alert.alert(err?.message || "Failed to send OTP")
 
-      setError(err?.message || "Failed to send OTP");
+      // setError(err?.message || "Failed to send OTP");
     }
   }
 };

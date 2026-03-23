@@ -1,4 +1,4 @@
-import React, { useState ,useCallback} from 'react';
+import React, { useState ,useCallback,useEffect} from 'react';
 import {
 View,
 Text,
@@ -7,7 +7,9 @@ Image,
 TouchableOpacity,
 ScrollView,
 Alert,
-BackHandler
+BackHandler,
+PermissionsAndroid,
+Platform
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
@@ -22,7 +24,21 @@ import { bsc, bscTestnet, polygon } from 'thirdweb/chains';
 import { useDispatch,useSelector } from 'react-redux';
 import { RootState } from '../../Store/Store';
 import { useFocusEffect } from "@react-navigation/native";
+import { fetchTimerIco,fetchReward,fetchRewardStatus } from '../../Store/Slices/homeSlice';
+import { downloadWhitepaper } from '../../Store/Slices/authSlice';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import { IMAGE_URL } from '@env';
+import FastImage from 'react-native-fast-image';
+import { fetchProfile } from '../../Store/Slices/profileSlice';
+
 export default function HomeScreen({navigation}:any) {
+  const [timeLeft, setTimeLeft] = useState({
+  days: "0",
+  hours: "0",
+  minutes: "0",
+  seconds: "0",
+});
+const [rewardShow, setRewardShow] = useState(false);
   const { disconnect } = useDisconnect();
   const { user, loading } = useSelector(
   (state: RootState) => state.auth   
@@ -30,7 +46,62 @@ export default function HomeScreen({navigation}:any) {
   const account = useActiveAccount();
   const address = account?.address;
   const isConnected = !!account;
+const dispatch = useDispatch<any>();
 
+const { timerIcoData, error } = useSelector(
+  (state: RootState) => state.home
+);
+const { rewardStatus } = useSelector(
+  (state: RootState) => state.home
+);
+  const { profileData } = useSelector((state: RootState) => state.profile);
+
+// console.log(user,'rewardStatus');
+
+useEffect(() => {
+        dispatch(fetchProfile());
+
+  dispatch(fetchTimerIco());
+  dispatch(fetchRewardStatus());
+  
+}, []);
+useEffect(() => {
+  console.log(timerIcoData,'timerIcoData');
+  
+  if (!timerIcoData) return;
+
+  const targetDate = new Date(timerIcoData); // 👈 API date
+
+  const interval = setInterval(() => {
+    const now = new Date();
+    const difference = targetDate.getTime() - now.getTime();
+
+    if (difference <= 0) {
+      clearInterval(interval);
+      setTimeLeft({
+        days: "0",
+        hours: "0",
+        minutes: "0",
+        seconds: "0",
+      });
+      return;
+    }
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((difference / (1000 * 60)) % 60);
+    const seconds = Math.floor((difference / 1000) % 60);
+
+    setTimeLeft({
+      days: String(days).padStart(2, "0"),
+      hours: String(hours).padStart(2, "0"),
+      minutes: String(minutes).padStart(2, "0"),
+      seconds: String(seconds).padStart(2, "0"),
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [timerIcoData]);
 useFocusEffect(
   useCallback(() => {
     const onBackPress = () => {
@@ -45,15 +116,85 @@ useFocusEffect(
       return true;
     };
 
-    // ✅ NEW WAY
+    //  NEW WAY
     const subscription = BackHandler.addEventListener(
       "hardwareBackPress",
       onBackPress
     );
 
-    return () => subscription.remove(); // ✅ FIXED
+    return () => subscription.remove(); 
   }, [])
 );
+const requestStoragePermission = async () => {
+
+  if (Platform.OS !== "android") return true;
+ console.log(Platform.Version,"Platform.Version");
+ 
+   // ✅ Android 13+
+   if (Platform.Version >= 29) {
+     return true; // no permission needed
+   }
+ const granted = await PermissionsAndroid.request(
+     PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+   );
+ 
+   return granted === PermissionsAndroid.RESULTS.GRANTED;
+};
+const handleDownloadWhitepaper = async () => {
+  try {
+    const hasPermission = await requestStoragePermission();
+
+    if (!hasPermission) {
+      Alert.alert("Permission denied");
+      return;
+    }
+
+    const res = await dispatch(downloadWhitepaper({})).unwrap();
+
+    const fileName = res?.data?.[0]?.file;
+
+    if (!fileName) {
+      Alert.alert("File not found");
+      return;
+    }
+
+    const fileUrl = encodeURI(IMAGE_URL + fileName);
+
+    const { config, fs } = ReactNativeBlobUtil;
+
+    const path = `${fs.dirs.DownloadDir}/${fileName}`;
+
+    await config({
+      fileCache: true,
+      path: path, // 👈 important
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        path: path,
+        title: fileName,
+        description: "Downloading Whitepaper",
+        mime: "application/pdf",
+        mediaScannable: true,
+      },
+    }).fetch("GET", fileUrl);
+
+    Alert.alert("Download started");
+
+  } catch (err: any) {
+    console.log("Download error:", err);
+    Alert.alert("Error", err?.message || "Download failed");
+  }
+};
+const handleAnswer = (value: "yes" | "no") => {
+  dispatch(fetchReward({ response: value }))
+    .unwrap()
+    .then(() => {
+      dispatch(fetchRewardStatus()); // optional refresh
+    });
+};
+const imageUrl = profileData?.image
+  ? IMAGE_URL + profileData.image
+  : null;
 return (
 
 <SafeAreaView style={{flex:1,backgroundColor:"#fff"}}>
@@ -75,15 +216,19 @@ style={styles.topSection}
 
 <TouchableOpacity  onPress={()=>navigation.navigate('SettingsScreen')}style={{flexDirection:"row",alignItems:"center"}}>
 
-<Image
-source={require("../../../assets/Icons/profile.png")}
-style={styles.avatar}
+<FastImage
+  source={
+    imageUrl
+      ? { uri: imageUrl }
+      : require("../../../assets/Images/place.jpg")
+  }
+  style={styles.avatar}
 />
 
 <View style={{marginLeft:10}}>
 <Text style={styles.greet}>Welcome back !</Text>
 <Text style={styles.name}>
-  {user?.name || "Guest"}
+  {profileData? profileData?.name:user?.name || "Guest"}
 </Text></View>
 
 </TouchableOpacity>
@@ -107,21 +252,21 @@ style={styles.avatar}
 </View>
 
 <View style={styles.timerRow}>
+{[
+  timeLeft.days,
+  timeLeft.hours,
+  timeLeft.minutes,
+  timeLeft.seconds,
+].map((item, i) => (
+  <View key={i} style={styles.timerItem}>
+    <View style={styles.timerCircle}>
+      <Text style={styles.timerNumber}>{item}</Text>
+    </View>
 
-{["2","23","40","6"].map((item,i)=>(
-
-<View key={i} style={styles.timerItem}>
-
-<View style={styles.timerCircle}>
-<Text style={styles.timerNumber}>{item}</Text>
-</View>
-
-<Text style={styles.timerLabel}>
-{["Days","Hours","Minutes","Seconds"][i]}
-</Text>
-
-</View>
-
+    <Text style={styles.timerLabel}>
+      {["Days", "Hours", "Minutes", "Seconds"][i]}
+    </Text>
+  </View>
 ))}
 
 </View>
@@ -154,12 +299,15 @@ Join ICO Before Timer Ends
 {/* JOIN ICO BUTTON */}
 
 <View style={styles.joinWrapper}>
-  <TouchableOpacity activeOpacity={0.8}>
+  <TouchableOpacity     onPress={() => navigation.navigate( "ICO" )}
+
+ activeOpacity={0.8}>
     <LinearGradient
       colors={["#7B3EF0","#3F0D97"]}
       start={{x:0,y:0}}
       end={{x:1,y:0}}
       style={styles.joinGradient}
+      
     >
       <Text style={styles.joinBtnText}>Join ICO  »</Text>
     </LinearGradient>
@@ -180,7 +328,7 @@ Join ICO Before Timer Ends
       <Text style={styles.tokenAmount}>1 Quadrillion</Text>
     </View>
 
-    <TouchableOpacity style={styles.downloadIcon}>
+    <TouchableOpacity  onPress={()=>handleDownloadWhitepaper()}style={styles.downloadIcon}>
       <Icon name="download-outline" size={24} color={Colors.primary}/>
 
       {/* <Text style={{fontSize:18,color:"#6A35FF"}}>⬇</Text> */}
@@ -188,7 +336,7 @@ Join ICO Before Timer Ends
 
   </View>
 
-  <TouchableOpacity style={styles.whitePaper}>
+  <TouchableOpacity  onPress={()=>handleDownloadWhitepaper()} style={styles.whitePaper}>
     <Text style={{color:"#fff",fontSize:16,fontFamily:Fonts.medium,}}>
       Download White Paper
     </Text>
@@ -231,7 +379,8 @@ style={styles.joinGradient}
 
 
 {/* REWARD CARD */}
-
+{!rewardStatus?
+<>
 <Image
 source={require("../../../assets/Images/trophy.png")}
 style={styles.trophy}
@@ -269,20 +418,27 @@ Do you want full control over your finances?
 colors={["#A88FE8","#8A7BBF"]}
 style={styles.answerBtn}
 >
+    <TouchableOpacity onPress={() => handleAnswer("no")}>
+
 <Text style={styles.answerText}>No</Text>
+</TouchableOpacity>
 </LinearGradient>
 
 <LinearGradient
 colors={["#C69AF7","#B77CE8"]}
 style={styles.answerBtn}
+
 >
-<Text style={styles.answerText}>Yes</Text>
+  <TouchableOpacity onPress={() => handleAnswer("yes")}>
+   <Text style={styles.answerText}>Yes</Text>
+
+  </TouchableOpacity>
 </LinearGradient>
 
 </View>
 
 </View>
-
+</>:null}
 
 
 
@@ -323,9 +479,9 @@ alignItems:"center"
 },
 
 avatar:{
-width:48,
-height:48,
-borderRadius:21
+width:52,
+height:52,
+borderRadius:52/2
 },
 
 greet:{
@@ -544,7 +700,7 @@ fontFamily:Fonts.semiBold,
 },
 joinWrapper:{
   alignItems:"center",
-  marginTop:-40,
+  marginTop:-20,
   zIndex:10
 },
 

@@ -10,7 +10,7 @@ import {
     Linking ,
     PermissionsAndroid,
     Platform,
-    ActivityIndicator
+    ActivityIndicator,
 
 } from "react-native";
 
@@ -34,6 +34,7 @@ import { IMAGE_URL } from "@env";
 import FileViewer from "react-native-file-viewer";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export const LoginScreen = ({ navigation }: any) => {
 
@@ -113,28 +114,52 @@ const loadRememberedUser = async () => {
 };
 const requestStoragePermission = async () => {
   if (Platform.OS !== "android") return true;
+console.log(Platform.Version,"Platform.Version");
 
-  try {
-    if (Platform.Version >= 33) {
-      // ✅ Android 13+
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    } else {
-      // ✅ Android 12 and below
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    }
-  } catch (err) {
-    console.log("Permission error:", err);
-    return false;
+  // ✅ Android 13+
+  if (Platform.Version >= 29) {
+    return true; // no permission needed
   }
+const granted = await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+  );
+
+  return granted === PermissionsAndroid.RESULTS.GRANTED;
+  // try {
+  //   const granted = await PermissionsAndroid.request(
+  //     PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+  //     {
+  //       title: "Storage Permission",
+  //       message: "App needs access to download files",
+  //       buttonPositive: "Allow",
+  //     }
+  //   );
+
+  //   return granted === PermissionsAndroid.RESULTS.GRANTED;
+  // } catch (err) {
+  //   console.log(err);
+  //   return false;
+  // }
 };
 const handleDownloadWhitepaper = async () => {
   try {
+    const hasPermission = await requestStoragePermission();
+
+   if (!hasPermission) {
+  Alert.alert(
+    "Permission Required",
+    "Please enable storage permission from settings",
+    [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Open Settings",
+        onPress: () => Linking.openSettings(),
+      },
+    ]
+  );
+  return;
+}
+
     const res = await dispatch(downloadWhitepaper({})).unwrap();
 
     const fileName = res?.data?.[0]?.file;
@@ -146,14 +171,17 @@ const handleDownloadWhitepaper = async () => {
 
     const fileUrl = encodeURI(IMAGE_URL + fileName);
 
-    console.log("Downloading from:", fileUrl);
-
     const { config, fs } = ReactNativeBlobUtil;
 
+    const path = `${fs.dirs.DownloadDir}/${fileName}`;
+
     await config({
+      fileCache: true,
+      path: path, // 👈 important
       addAndroidDownloads: {
         useDownloadManager: true,
         notification: true,
+        path: path,
         title: fileName,
         description: "Downloading Whitepaper",
         mime: "application/pdf",
@@ -161,11 +189,11 @@ const handleDownloadWhitepaper = async () => {
       },
     }).fetch("GET", fileUrl);
 
-    Alert.alert("Download started", "Check notification");
+    Alert.alert("Download started");
 
   } catch (err: any) {
     console.log("Download error:", err);
-    Alert.alert("Error", err || "Download failed");
+    Alert.alert("Error", err?.message || "Download failed");
   }
 };
   return (
