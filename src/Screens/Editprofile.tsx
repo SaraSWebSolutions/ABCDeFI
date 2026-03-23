@@ -83,14 +83,24 @@ const requestGalleryPermission = async () => {
   let permission;
 
   if (Platform.OS === "android") {
-    permission = PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
+    if (Platform.Version >= 33) {
+      // ✅ Android 13+
+      permission = PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
+    } else {
+      // ✅ Android 12 and below
+      permission = PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
+    }
   } else {
     permission = PERMISSIONS.IOS.PHOTO_LIBRARY;
   }
 
   const result = await request(permission);
+
   return result === RESULTS.GRANTED;
 };
+
+
+
   // 📸 Image Picker
  const pickImage = () => {
   Alert.alert("Select Image", "Choose option", [
@@ -189,14 +199,24 @@ const imageUrl = profileData?.image
 
         {/* PROFILE IMAGE */}
         <TouchableOpacity style={styles.imageWrapper} onPress={pickImage}>
-         <Image
+          <Image
+  source={
+    image
+      ? { uri: image } // ✅ local preview
+      : profileData?.image
+      ? { uri: imageUrl}
+      : require("../../assets/Images/place.jpg")
+  }
+  style={styles.profileImage}
+/>
+         {/* <Image
   source={
     imageUrl
       ? { uri: imageUrl }
       : require("../../assets/Images/place.jpg")
   }
   style={styles.profileImage}
-/>
+/> */}
           <View style={styles.cameraIcon}>
             <Icon name="camera" size={16} color="#fff" />
           </View>
