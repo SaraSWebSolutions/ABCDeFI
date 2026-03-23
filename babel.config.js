@@ -17,6 +17,13 @@ module.exports = {
         verbose: false
       }
     ],
-    "@babel/plugin-transform-export-namespace-from"
+    "@babel/plugin-transform-export-namespace-from",
+    "babel-plugin-transform-import-meta",
+    [
+      "babel-plugin-transform-define",
+      {
+        "import.meta.env": "process.env"
+      }
+    ]
   ]
 };

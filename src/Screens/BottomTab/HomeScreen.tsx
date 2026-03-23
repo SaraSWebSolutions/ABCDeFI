@@ -14,14 +14,14 @@ Platform
 
 import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Icon  from "react-native-vector-icons/Ionicons";
+import Icon from "react-native-vector-icons/Ionicons";
 import { Colors } from "../../Utils/Colors";
 import Fonts from "../../Utils/Fonts";
-import { ConnectButton, useActiveAccount, useDisconnect } from 'thirdweb/react';
-import { thirdwebClient,activeChain,chains } from '../../Config/thirdwebConfig';
+import { ConnectButton, useActiveAccount, useActiveWalletChain, useDisconnect, useSwitchActiveWalletChain } from 'thirdweb/react';
+import { thirdwebClient, activeChain, chains } from '../../Config/thirdwebConfig';
 import { connectButtonConfig } from '../../Config/walletConfig';
 import { bsc, bscTestnet, polygon } from 'thirdweb/chains';
-import { useDispatch,useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../Store/Store';
 import { useFocusEffect } from "@react-navigation/native";
 import { fetchTimerIco,fetchReward,fetchRewardStatus } from '../../Store/Slices/homeSlice';
@@ -41,9 +41,11 @@ export default function HomeScreen({navigation}:any) {
 const [rewardShow, setRewardShow] = useState(false);
   const { disconnect } = useDisconnect();
   const { user, loading } = useSelector(
-  (state: RootState) => state.auth   
-);
+    (state: RootState) => state.auth
+  );
   const account = useActiveAccount();
+  const chain = useActiveWalletChain();
+  const switchChain = useSwitchActiveWalletChain();
   const address = account?.address;
   const isConnected = !!account;
 const dispatch = useDispatch<any>();
@@ -113,16 +115,15 @@ useFocusEffect(
           { text: "Exit", onPress: () => BackHandler.exitApp() },
         ]
       );
-      return true;
+      return true; // ✅ VERY IMPORTANT
     };
 
-    //  NEW WAY
     const subscription = BackHandler.addEventListener(
       "hardwareBackPress",
       onBackPress
     );
 
-    return () => subscription.remove(); 
+    return () => subscription.remove();
   }, [])
 );
 const requestStoragePermission = async () => {
@@ -196,60 +197,63 @@ const imageUrl = profileData?.image
   ? IMAGE_URL + profileData.image
   : null;
 return (
+<SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+  <ScrollView
+    contentContainerStyle={{ paddingBottom: 80 }}
+    showsVerticalScrollIndicator={false}
+  >
 
-<SafeAreaView style={{flex:1,backgroundColor:"#fff"}}>
+        <View style={styles.container}>
 
-<ScrollView contentContainerStyle={{paddingBottom:80,}} showsVerticalScrollIndicator={false}>
+          {/* TOP GRADIENT AREA */}
 
-<View style={styles.container}>
+          <LinearGradient
+            colors={["#1A0048", "#5B2BD6", "#9F7BFF"]}
+            style={styles.topSection}
+          >
 
-{/* TOP GRADIENT AREA */}
+            {/* HEADER */}
 
-<LinearGradient
-colors={["#1A0048","#5B2BD6","#9F7BFF"]}
-style={styles.topSection}
->
+            <View style={styles.header}>
 
-{/* HEADER */}
+  <TouchableOpacity
+    onPress={() => navigation.navigate("SettingsScreen")}
+    style={{ flexDirection: "row", alignItems: "center" }}
+  >
+    <FastImage
+      source={
+        imageUrl
+          ? { uri: imageUrl }
+          : require("../../../assets/Images/place.jpg")
+      }
+      style={styles.avatar}
+    />
 
-<View style={styles.header}>
+    <View style={{ marginLeft: 10 }}>
+      <Text style={styles.greet}>Welcome back !</Text>
+      <Text style={styles.name}>
+        {profileData?.name || user?.name || "Guest"}
+      </Text>
+    </View>
+  </TouchableOpacity>
 
-<TouchableOpacity  onPress={()=>navigation.navigate('SettingsScreen')}style={{flexDirection:"row",alignItems:"center"}}>
+  {/* ✅ Separate bell */}
+  <View style={styles.bell}>
+    <Icon name="notifications-outline" size={24} color="#FFF" />
+  </View>
 
-<FastImage
-  source={
-    imageUrl
-      ? { uri: imageUrl }
-      : require("../../../assets/Images/place.jpg")
-  }
-  style={styles.avatar}
-/>
-
-<View style={{marginLeft:10}}>
-<Text style={styles.greet}>Welcome back !</Text>
-<Text style={styles.name}>
-  {profileData? profileData?.name:user?.name || "Guest"}
-</Text></View>
-
-</TouchableOpacity>
-
-<View style={styles.bell}>
-  <Icon name="notifications-outline" size={24} color={'#FFF'}/>
-{/* <Text>🔔</Text> */}
 </View>
 
-</View>
 
+            {/* TIMER BOX */}
 
-{/* TIMER BOX */}
+            <View style={styles.timerBox}>
 
-<View style={styles.timerBox}>
-
-<View style={styles.timerTitleRow}>
-<View style={styles.line}/>
-<Text style={styles.icoTitle}>ICO Starts In</Text>
-<View style={styles.line}/>
-</View>
+              <View style={styles.timerTitleRow}>
+                <View style={styles.line} />
+                <Text style={styles.icoTitle}>ICO Starts In</Text>
+                <View style={styles.line} />
+              </View>
 
 <View style={styles.timerRow}>
 {[
@@ -269,34 +273,34 @@ style={styles.topSection}
   </View>
 ))}
 
-</View>
+              </View>
 
-</View>
+            </View>
 
 
-{/* CONNECT WALLET */}
-  <View style={{marginTop:25}}>
-    
-        <ConnectButton 
-          client={thirdwebClient}
-          {...connectButtonConfig}
-          chain={activeChain}
-          chains={chains}
-        />  
-    </View>
+            {/* CONNECT WALLET */}
+            <View style={{ marginTop: 25 }}>
 
-{/* {isConnected && address && (
+              <ConnectButton
+                client={thirdwebClient}
+                {...connectButtonConfig}
+                chain={activeChain}
+                chains={chains}
+              />
+            </View>
+
+            {/* {isConnected && address && (
 <Text style={styles.walletAddress}>
   {`${address.slice(0,6)}....${address.slice(-4)}`}
 </Text>
 )} */}
 
-<Text style={styles.joinText}>
-Join ICO Before Timer Ends
-</Text>
+            <Text style={styles.joinText}>
+              Join ICO Before Timer Ends
+            </Text>
 
-</LinearGradient>
-{/* JOIN ICO BUTTON */}
+          </LinearGradient>
+          {/* JOIN ICO BUTTON */}
 
 <View style={styles.joinWrapper}>
   <TouchableOpacity     onPress={() => navigation.navigate( "ICO" )}
@@ -315,26 +319,26 @@ Join ICO Before Timer Ends
 </View>
 
 
-{/* TOKEN CARD */}
+          {/* TOKEN CARD */}
 
-<View style={styles.tokenCard}>
+          <View style={styles.tokenCard}>
 
-  <Text style={styles.limit}>Limited allocation remaining</Text>
+            <Text style={styles.limit}>Limited allocation remaining</Text>
 
-  <View style={styles.tokenHeader}>
+            <View style={styles.tokenHeader}>
 
-    <View>
-      <Text style={styles.tokenTitle}>Token allocation</Text>
-      <Text style={styles.tokenAmount}>1 Quadrillion</Text>
-    </View>
+              <View>
+                <Text style={styles.tokenTitle}>Token allocation</Text>
+                <Text style={styles.tokenAmount}>1 Quadrillion</Text>
+              </View>
 
     <TouchableOpacity  onPress={()=>handleDownloadWhitepaper()}style={styles.downloadIcon}>
       <Icon name="download-outline" size={24} color={Colors.primary}/>
 
-      {/* <Text style={{fontSize:18,color:"#6A35FF"}}>⬇</Text> */}
-    </TouchableOpacity>
+                {/* <Text style={{fontSize:18,color:"#6A35FF"}}>⬇</Text> */}
+              </TouchableOpacity>
 
-  </View>
+            </View>
 
   <TouchableOpacity  onPress={()=>handleDownloadWhitepaper()} style={styles.whitePaper}>
     <Text style={{color:"#fff",fontSize:16,fontFamily:Fonts.medium,}}>
@@ -342,11 +346,11 @@ Join ICO Before Timer Ends
     </Text>
   </TouchableOpacity>
 
-</View>
+          </View>
 
-{/* JOIN ICO BUTTON */}
+          {/* JOIN ICO BUTTON */}
 
-{/* <View style={styles.joinWrapper}>
+          {/* <View style={styles.joinWrapper}>
 
 <LinearGradient
 colors={["#7B3EF0","#3F0D97"]}
@@ -389,30 +393,30 @@ style={styles.trophy}
 
 
 
-{/* REWARD BAR */}
+            {/* REWARD BAR */}
 
-<LinearGradient
-colors={["#A66CFF","#6A35FF"]}
-start={{x:0,y:0}}
-end={{x:1,y:0}}
-style={styles.rewardBar}
->
+            <LinearGradient
+              colors={["#A66CFF", "#6A35FF"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.rewardBar}
+            >
 
-<Text style={styles.rewardText}>Reward Points</Text>
+              <Text style={styles.rewardText}>Reward Points</Text>
 
-<View style={styles.rewardRight}>
-<Text style={styles.coin}>🪙</Text>
-<Text style={styles.points}>300</Text>
-</View>
+              <View style={styles.rewardRight}>
+                <Text style={styles.coin}>🪙</Text>
+                <Text style={styles.points}>300</Text>
+              </View>
 
-</LinearGradient>
+            </LinearGradient>
 
 
-<Text style={styles.question}>
-Do you want full control over your finances?
-</Text>
+            <Text style={styles.question}>
+              Do you want full control over your finances?
+            </Text>
 
-<View style={styles.answerRow}>
+            <View style={styles.answerRow}>
 
 <LinearGradient
 colors={["#A88FE8","#8A7BBF"]}
@@ -435,48 +439,48 @@ style={styles.answerBtn}
   </TouchableOpacity>
 </LinearGradient>
 
-</View>
+            </View>
 
 </View>
 </>:null}
 
 
 
-{/* </View> */}
+          {/* </View> */}
 
-</View>
+        </View>
 
-</ScrollView>
+      </ScrollView>
 
-</SafeAreaView>
-);
+    </SafeAreaView>
+  );
 }
 
 
 const styles = StyleSheet.create({
 
-container:{
-flex:1
-},
-tokenHeader:{
-flexDirection:"row",
-justifyContent:"space-between",
-alignItems:"center",
-marginTop:10
-},
+  container: {
+    flex: 1
+  },
+  tokenHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10
+  },
 
-topSection:{
-padding:20,
-paddingBottom:90,
-// borderBottomLeftRadius:30,
-// borderBottomRightRadius:30
-},
+  topSection: {
+    padding: 20,
+    paddingBottom: 90,
+    // borderBottomLeftRadius:30,
+    // borderBottomRightRadius:30
+  },
 
-header:{
-flexDirection:"row",
-justifyContent:"space-between",
-alignItems:"center"
-},
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
 
 avatar:{
 width:52,
@@ -484,217 +488,217 @@ height:52,
 borderRadius:52/2
 },
 
-greet:{
-color:"#ccc",
-fontSize:14,
-fontFamily:Fonts.regular
-},
+  greet: {
+    color: "#ccc",
+    fontSize: 14,
+    fontFamily: Fonts.regular
+  },
 
-name:{
-color:"#fff",
-fontSize:20,
-fontFamily:Fonts.bold,
-fontWeight:"700"
-},
+  name: {
+    color: "#fff",
+    fontSize: 20,
+    fontFamily: Fonts.bold,
+    fontWeight: "700"
+  },
 
-bell:{
-width:40,
-height:40,
-borderRadius:20,
-backgroundColor:"rgba(255,255,255,0.25)",
-justifyContent:"center",
-alignItems:"center"
-},
-
-
-/* TIMER BOX */
-
-timerBox:{
-marginTop:25,
-borderWidth:1,
-borderColor:"rgba(255,255,255,0.4)",
-borderRadius:22,
-padding:20
-},
-
-timerTitleRow:{
-flexDirection:"row",
-alignItems:"center",
-marginBottom:20
-},
-
-line:{
-flex:1,
-height:1,
-backgroundColor:"rgba(255,255,255,0.4)"
-},
-
-icoTitle:{
-color:"#fff",
-marginHorizontal:10,
-fontSize:16,
-fontFamily:Fonts.medium,
-fontWeight:"600"
-},
-
-timerRow:{
-flexDirection:"row",
-justifyContent:"space-between"
-},
-
-timerItem:{
-alignItems:"center"
-},
-
-timerCircle:{
-width:70,
-height:70,
-borderRadius:35,
-backgroundColor:"rgba(255,255,255,0.2)",
-justifyContent:"center",
-alignItems:"center"
-},
-
-timerNumber:{
-color:"#fff",
-fontSize:22,
-fontFamily:Fonts.bold,
-fontWeight:"700"
-},
-
-timerLabel:{
-color:"#eee",
-marginTop:6,
-fontFamily:Fonts.medium,  
-},
+  bell: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    justifyContent: "center",
+    alignItems: "center"
+  },
 
 
-walletBtn:{
-backgroundColor:"rgba(255,255,255,0.25)",
-marginTop:25,
-padding:14,
-borderRadius:15,
-alignItems:"center"
-},
+  /* TIMER BOX */
 
-walletText:{
-color:"#fff",
-fontSize:17,
-fontFamily:Fonts.semiBold,
-},
+  timerBox: {
+    marginTop: 25,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.4)",
+    borderRadius: 22,
+    padding: 20
+  },
 
-walletAddress:{
-color:"#fff",
-fontSize:14,
-fontFamily:Fonts.regular,
-marginTop:10,
-textAlign:"center",
-opacity:0.8
-},
+  timerTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 20
+  },
 
-joinText:{
-textAlign:"center",
-color:"#fff",
-marginTop:20,
-fontFamily:Fonts.regular,
-},
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "rgba(255,255,255,0.4)"
+  },
+
+  icoTitle: {
+    color: "#fff",
+    marginHorizontal: 10,
+    fontSize: 16,
+    fontFamily: Fonts.medium,
+    fontWeight: "600"
+  },
+
+  timerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between"
+  },
+
+  timerItem: {
+    alignItems: "center"
+  },
+
+  timerCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+
+  timerNumber: {
+    color: "#fff",
+    fontSize: 22,
+    fontFamily: Fonts.bold,
+    fontWeight: "700"
+  },
+
+  timerLabel: {
+    color: "#eee",
+    marginTop: 6,
+    fontFamily: Fonts.medium,
+  },
+
+
+  walletBtn: {
+    backgroundColor: "rgba(255,255,255,0.25)",
+    marginTop: 25,
+    padding: 14,
+    borderRadius: 15,
+    alignItems: "center"
+  },
+
+  walletText: {
+    color: "#fff",
+    fontSize: 17,
+    fontFamily: Fonts.semiBold,
+  },
+
+  walletAddress: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: Fonts.regular,
+    marginTop: 10,
+    textAlign: "center",
+    opacity: 0.8
+  },
+
+  joinText: {
+    textAlign: "center",
+    color: "#fff",
+    marginTop: 20,
+    fontFamily: Fonts.regular,
+  },
 
 
 
 
-noBtn:{
-backgroundColor:"#E5E5E5",
-paddingHorizontal:35,
-paddingVertical:10,
-borderRadius:20
-},
+  noBtn: {
+    backgroundColor: "#E5E5E5",
+    paddingHorizontal: 35,
+    paddingVertical: 10,
+    borderRadius: 20
+  },
 
-yesBtn:{
-backgroundColor:"#C084FC",
-paddingHorizontal:35,
-paddingVertical:10,
-borderRadius:20
-},
+  yesBtn: {
+    backgroundColor: "#C084FC",
+    paddingHorizontal: 35,
+    paddingVertical: 10,
+    borderRadius: 20
+  },
 
-rewardCard:{
-margin:20,
-backgroundColor:"#fff",
-borderRadius:25,
-top:-42,
-paddingBottom:20,
-overflow:"hidden",
-elevation:6,
-alignSelf:'center',
-width:"85%",
-},
+  rewardCard: {
+    margin: 20,
+    backgroundColor: "#fff",
+    borderRadius: 25,
+    top: -42,
+    paddingBottom: 20,
+    overflow: "hidden",
+    elevation: 6,
+    alignSelf: 'center',
+    width: "85%",
+  },
 
-trophy:{
-width:"90%",
-alignSelf:'center',
-height:260,
-marginTop:20,
-borderRadius:12,
-},
+  trophy: {
+    width: "90%",
+    alignSelf: 'center',
+    height: 260,
+    marginTop: 20,
+    borderRadius: 12,
+  },
 
-rewardBar:{
-position:"absolute",
-//top:-5,
-alignSelf:"center",
-width:"95%",
-borderRadius:40,
-paddingVertical:13,
-paddingHorizontal:20,
-flexDirection:"row",
-justifyContent:"space-between",
-alignItems:"center",
-elevation:6
-},
+  rewardBar: {
+    position: "absolute",
+    //top:-5,
+    alignSelf: "center",
+    width: "95%",
+    borderRadius: 40,
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    elevation: 6
+  },
 
-rewardText:{
-color:"#fff",
-fontSize:16,
-fontFamily:Fonts.semiBold,
-fontWeight:"600"
-},
+  rewardText: {
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: Fonts.semiBold,
+    fontWeight: "600"
+  },
 
-rewardRight:{
-flexDirection:"row",
-alignItems:"center"
-},
+  rewardRight: {
+    flexDirection: "row",
+    alignItems: "center"
+  },
 
-coin:{
-marginRight:6
-},
+  coin: {
+    marginRight: 6
+  },
 
-points:{
-color:"#fff",
-fontWeight:"700"
-},
+  points: {
+    color: "#fff",
+    fontWeight: "700"
+  },
 
-question:{
-textAlign:"center",
-marginTop:60,
-fontSize:18,
-fontFamily:Fonts.medium,
-fontWeight:"500",
-paddingHorizontal:30
-},
+  question: {
+    textAlign: "center",
+    marginTop: 60,
+    fontSize: 18,
+    fontFamily: Fonts.medium,
+    fontWeight: "500",
+    paddingHorizontal: 30
+  },
 
-answerRow:{
-flexDirection:"row",
-justifyContent:"space-evenly",
-marginTop:25
-},
+  answerRow: {
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    marginTop: 25
+  },
 
-answerBtn:{
-paddingHorizontal:35,
-paddingVertical:5,
-borderRadius:12
-},
+  answerBtn: {
+    paddingHorizontal: 35,
+    paddingVertical: 5,
+    borderRadius: 12
+  },
 
-answerText:{
-color:"#fff",
-fontSize:16,
+  answerText: {
+    color: "#fff",
+    fontSize: 16,
 
 fontFamily:Fonts.semiBold,
 },
@@ -704,79 +708,79 @@ joinWrapper:{
   zIndex:10
 },
 
-joinGradient:{
-  paddingHorizontal:110,
-  paddingVertical:14,
-  borderRadius:40,
-  shadowColor:"#3F0D97",
-  shadowOpacity:0.5,
-  shadowRadius:12,
-  shadowOffset:{width:0,height:8},
-  elevation:10,
-  top:-40,
-},
+  joinGradient: {
+    paddingHorizontal: 110,
+    paddingVertical: 14,
+    borderRadius: 40,
+    shadowColor: "#3F0D97",
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
+    top: -40,
+  },
 
-joinBtnText:{
-  color:"#fff",
-  fontSize:18,
-  fontWeight:"600"
-},
-
-
-// tokenCard:{
-//   marginHorizontal:20,
-//   padding:22,
-//   backgroundColor:"#fff",
-//   borderRadius:22,
-//   elevation:8,
-//   marginTop:-20
-// },
-
-tokenCard:{
-marginHorizontal:20,
-padding:22,
-backgroundColor:"#fff",
-borderBottomLeftRadius:15,borderBottomRightRadius:15,
-elevation:8,
-marginTop:-60
-},
+  joinBtnText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "600"
+  },
 
 
+  // tokenCard:{
+  //   marginHorizontal:20,
+  //   padding:22,
+  //   backgroundColor:"#fff",
+  //   borderRadius:22,
+  //   elevation:8,
+  //   marginTop:-20
+  // },
 
-downloadIcon:{
-width:39,
-height:39,
-borderRadius:20,
-backgroundColor:"#F1F1F1",
-justifyContent:"center",
-alignItems:"center"
-},
+  tokenCard: {
+    marginHorizontal: 20,
+    padding: 22,
+    backgroundColor: "#fff",
+    borderBottomLeftRadius: 15, borderBottomRightRadius: 15,
+    elevation: 8,
+    marginTop: -60
+  },
 
-limit:{
-color:"red",
-textAlign:"center",
-fontSize:13,
-fontFamily:Fonts.regular,
-marginTop:10,
-},
 
-tokenTitle:{
-fontSize:20,
-fontFamily:Fonts.bold,
-fontWeight:"600"
-},
 
-tokenAmount:{
-color:"#888",
-marginTop:2,
-fontFamily:Fonts.regular,
-},
+  downloadIcon: {
+    width: 39,
+    height: 39,
+    borderRadius: 20,
+    backgroundColor: "#F1F1F1",
+    justifyContent: "center",
+    alignItems: "center"
+  },
 
-whitePaper:{
-backgroundColor:"#6A35FF",
-padding:14,
-borderRadius:15,
-alignItems:"center",
-marginTop:20
-}
+  limit: {
+    color: "red",
+    textAlign: "center",
+    fontSize: 13,
+    fontFamily: Fonts.regular,
+    marginTop: 10,
+  },
+
+  tokenTitle: {
+    fontSize: 20,
+    fontFamily: Fonts.bold,
+    fontWeight: "600"
+  },
+
+  tokenAmount: {
+    color: "#888",
+    marginTop: 2,
+    fontFamily: Fonts.regular,
+  },
+
+  whitePaper: {
+    backgroundColor: "#6A35FF",
+    padding: 14,
+    borderRadius: 15,
+    alignItems: "center",
+    marginTop: 20
+  }
 });
