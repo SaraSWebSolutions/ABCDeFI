@@ -60,10 +60,10 @@ const updatePassword = async () => {
 
     console.log("Password Reset Success:", res);
 
-    // ✅ Success Alert
+    //  Success Alert
     Alert.alert(res?.message || "Password updated successfully");
 
-    // ✅ Navigate to Login
+    //  Navigate to Login
     navigation.reset({
       index: 0,
       routes: [{ name: "Login" }],

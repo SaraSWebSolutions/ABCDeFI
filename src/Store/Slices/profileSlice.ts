@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { AuthService } from "../../Services/authService";
-
+import { hideLoader,showLoader } from "./loaderSlice";
 // ============================
 // 🔹 Types
 // ============================
@@ -58,15 +58,18 @@ export const fetchProfile = createAsyncThunk<
   User,
   void,
   { rejectValue: string }
->("profile/fetchProfile", async (_, { rejectWithValue }) => {
+>("profile/fetchProfile", async (_, { rejectWithValue ,dispatch}) => {
   try {
+    dispatch(showLoader())
     const response: ProfileResponse = await AuthService.profile();
     return response.data; // only user object
   } catch (error: any) {
     return rejectWithValue(
       error?.response?.data?.message || "Something went wrong"
     );
-  }
+  }finally {
+      dispatch(hideLoader()); //  stop loader
+    }
 });
 
 // Update Profile
@@ -74,8 +77,9 @@ export const updateProfile = createAsyncThunk<
   User,
   UpdateProfilePayload,
   { rejectValue: string }
->("profile/updateProfile", async (formData, { rejectWithValue }) => {
+>("profile/updateProfile", async (formData, { rejectWithValue,dispatch }) => {
   try {
+    dispatch(showLoader())
     const response: ProfileResponse =
       await AuthService.update_profile(formData);
     return response.data;
@@ -83,7 +87,9 @@ export const updateProfile = createAsyncThunk<
     return rejectWithValue(
       error?.response?.data?.message || "Something went wrong"
     );
-  }
+  }finally {
+      dispatch(hideLoader()); //  stop loader
+    }
 });
 
 // ============================

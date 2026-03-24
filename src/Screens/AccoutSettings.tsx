@@ -84,7 +84,7 @@ export default function AccountSettingsScreen({ navigation }: any) {
           styles={styles}
             icon="lock-reset"
             text="Change Password"
-            onPress={() => navigation.navigate("ChangePassword")}
+            onPress={() => navigation.navigate("ChangePasswordScreen")}
           />
 
           {/* NOTIFICATION */}
@@ -106,9 +106,9 @@ export default function AccountSettingsScreen({ navigation }: any) {
 
         {/* MORE */}
         <View style={styles.card}>
-          <MenuItem styles={styles} icon="file-document-outline" text="Terms & Conditions" />
-          <MenuItem  styles={styles}icon="shield-outline" text="Privacy Policy" />
-          <MenuItem  styles={styles} icon="information-outline" text="About App" />
+          <MenuItem  onPress={()=>navigation.navigate("ContentScreen", { type: "terms" })}styles={styles} icon="file-document-outline" text="Terms & Conditions" />
+          <MenuItem   onPress={()=>navigation.navigate("ContentScreen", { type: "privacy" })} styles={styles}icon="shield-outline" text="Privacy Policy" />
+          <MenuItem  onPress={()=>navigation.navigate("ContentScreen", { type: "about" })}styles={styles} icon="information-outline" text="About App" />
         </View>
 
         {/* LOGOUT */}

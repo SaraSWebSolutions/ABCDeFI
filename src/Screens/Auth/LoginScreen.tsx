@@ -34,7 +34,10 @@ import { IMAGE_URL } from "@env";
 import FileViewer from "react-native-file-viewer";
 import ReactNativeBlobUtil from "react-native-blob-util";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import Google from '../../../assets/Icons/google.svg';
+import Fb from '../../../assets/Icons/fb.svg';
+import Apple from '../../../assets/Icons/apple.svg';
+import Logo from '../../../assets/Images/login_logo.svg';
 
 export const LoginScreen = ({ navigation }: any) => {
 
@@ -66,7 +69,7 @@ const loadRememberedUser = async () => {
       setRemember(true);
     }
   } catch (error) {
-    console.log("Load Error:", error);
+    // console.log("Load Error:", error);
   }
 };
  const onLogin = async () => {
@@ -91,7 +94,7 @@ const loadRememberedUser = async () => {
       loginUser(payload)
     ).unwrap();
 
-    console.log("Login Success:", res);
+    // console.log("Login Success:", res);
 
     if (remember) {
       await AsyncStorage.setItem(
@@ -107,16 +110,16 @@ const loadRememberedUser = async () => {
 
   } catch (err: any) {
 
-    console.log("Login Error:", err);
+    // console.log("Login Error:", err);
 
     Alert.alert("Login Failed", err.data?.message || "Something went wrong");
   }
 };
 const requestStoragePermission = async () => {
   if (Platform.OS !== "android") return true;
-console.log(Platform.Version,"Platform.Version");
+// console.log(Platform.Version,"Platform.Version");
 
-  // ✅ Android 13+
+  //  Android 13+
   if (Platform.Version >= 29) {
     return true; // no permission needed
   }
@@ -162,15 +165,27 @@ const handleDownloadWhitepaper = async () => {
 
     const res = await dispatch(downloadWhitepaper({})).unwrap();
 
+    // console.log("API RESPONSE ", res);  //  STEP 1
+
     const fileName = res?.data?.[0]?.file;
+
+    // console.log("FILE NAME ", fileName); //  STEP 2
 
     if (!fileName) {
       Alert.alert("File not found");
       return;
     }
 
-    const fileUrl = encodeURI(IMAGE_URL + fileName);
 
+const fileUrl = encodeURI(IMAGE_URL + fileName);
+
+    // console.log("FINAL URL ", fileUrl); //  STEP 3 (MOST IMPORTANT)
+
+    // validate URL before download
+    if (!fileUrl || !fileUrl.startsWith("http")) {
+      Alert.alert("Invalid URL", fileUrl);
+      return;
+    }
     const { config, fs } = ReactNativeBlobUtil;
 
     const path = `${fs.dirs.DownloadDir}/${fileName}`;
@@ -192,7 +207,7 @@ const handleDownloadWhitepaper = async () => {
     Alert.alert("Download started");
 
   } catch (err: any) {
-    console.log("Download error:", err);
+    // console.log("Download error:", err);
     Alert.alert("Error", err?.message || "Download failed");
   }
 };
@@ -202,9 +217,11 @@ const handleDownloadWhitepaper = async () => {
     
 
     <ScrollView contentContainerStyle={styles.container}>
-
+<View style={{ alignItems: "center" }}>
+  <Logo width={160} height={160} />
+</View>
       {/* Logo */}
-      <Image
+      {/* <Image
         source={require("../../../assets/Images/login_logo.png")}
         style={{
           height: hp(20),
@@ -213,7 +230,7 @@ const handleDownloadWhitepaper = async () => {
           alignSelf:'center',
           marginTop:20,
         }}
-      />
+      /> */}
 
       {/* Title */}
       <Text style={[styles.title, { fontSize: font(28) }]}>
@@ -297,24 +314,27 @@ const handleDownloadWhitepaper = async () => {
 
      <View style={styles.socialRow}>
   <TouchableOpacity style={styles.socialBtn}>
-    <Image
+    <Google width={50} height={50}/>
+    {/* <Image
       source={require("../../../assets/Icons/google.png")}
       style={styles.social}
-    />
+    /> */}
   </TouchableOpacity>
 
   <TouchableOpacity style={styles.socialBtn}>
-    <Image
+    <Fb width={50} height={50}/>
+    {/* <Image
       source={require("../../../assets/Icons/fb.png")}
       style={styles.social}
-    />
+    /> */}
   </TouchableOpacity>
 
   <TouchableOpacity style={styles.socialBtn}>
-    <Image
+    <Apple width={50} height={50}/>
+    {/* <Image
       source={require("../../../assets/Icons/apple.png")}
       style={styles.social}
-    />
+    /> */}
   </TouchableOpacity>
 </View>
 

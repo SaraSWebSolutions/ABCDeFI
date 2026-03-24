@@ -12,6 +12,7 @@ import AppNavigator from "./Navigation/AppNavigator"
 import { Provider } from "react-redux";
 import { store } from "./Store/Store"
 import { ThirdwebProvider, thirdwebClient, activeChain } from "./Config/thirdwebConfig"
+import { Loader } from "./Components/CommanLoader"
 const queryClient = new QueryClient()
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
           <ThirdwebProvider client={thirdwebClient} activeChain={activeChain}>
             <NavigationContainer>
               <AppNavigator />
+              <Loader/>
             </NavigationContainer>
           </ThirdwebProvider>
         </QueryClientProvider>

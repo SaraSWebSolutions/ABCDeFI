@@ -39,7 +39,6 @@ export const SplashScreen = ({ navigation }: any) => {
       }, 3000);
 
     } catch (error) {
-      console.log("Splash API Error:", error);
       setTimeout(() => {
         navigation.replace("Login");
       }, 3000);
@@ -65,7 +64,7 @@ export const SplashScreen = ({ navigation }: any) => {
     >
       <View style={styles.container}>
 <FastImage
-source={require('../../assets/Images/Splash_logo.png')}
+source={require('../../assets/Images/splash_logo.png')}
   // source={
   //   data?.data?.[0]?.image
   //     ? {

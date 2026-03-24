@@ -9,10 +9,9 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (data: any, { rejectWithValue, dispatch }) => {
     try {
-      dispatch(showLoader()); // ✅ start loader
+      dispatch(showLoader()); //  start loader
 
       const response = await AuthService.login(data);
-console.log(response,'response');
 
       const token = response?.token;
       
@@ -29,7 +28,7 @@ console.log(response,'response');
         error?.response || "Login failed"
       );
     } finally {
-      dispatch(hideLoader()); // ✅ stop loader
+      dispatch(hideLoader()); //  stop loader
     }
   }
 );
@@ -58,15 +57,15 @@ export const registerUser = createAsyncThunk(
 
       const response = await AuthService.register(data);
 
-      const token = response?.data?.token;
+      // const token = response?.data?.token;
 
-      // ✅ if API returns token after register
-      if (token) {
-        await AsyncStorage.setItem("token", token);
-        api.defaults.headers.Authorization = `Bearer ${token}`;
-      }
+      // //  if API returns token after register
+      // if (token) {
+      //   await AsyncStorage.setItem("token", token);
+      //   api.defaults.headers.Authorization = `Bearer ${token}`;
+      // }
 
-      return response.data;
+      return response;
 
     } catch (error: any) {
       return rejectWithValue(
@@ -86,15 +85,15 @@ export const verifyOtp = createAsyncThunk(
       dispatch(showLoader());
 
       const response = await AuthService.otpVerify(data);
-console.log('response',response);
+// console.log('response',response);
 
-      //const token = response?.token;
+      const token = response?.token;
 
-      //  save token after OTP verify (important)
-      // if (token) {
-      //   await AsyncStorage.setItem("token", token);
-      //   api.defaults.headers.Authorization = `Bearer ${token}`;
-      // }
+       //save token after OTP verify (important)
+      if (token) {
+        await AsyncStorage.setItem("token", token);
+        api.defaults.headers.Authorization = `Bearer ${token}`;
+      }
 
       return response;
 
@@ -161,7 +160,7 @@ export const forgotPasswordMobile = createAsyncThunk(
 
       const response = await AuthService.forgotPassword_with_mobile(data);
 
-      return response; // ✅ FIXED
+      return response; //  FIXED
 
     } catch (err: any) {
       return rejectWithValue(err?.response?.data || "Error");
@@ -180,7 +179,7 @@ export const verifyForgotOtp = createAsyncThunk(
 
       const response = await AuthService.forgotPassword_with_mobile_verifyOtp(data);
 
-      return response; // ✅ FIXED
+      return response; //  FIXED
 
     } catch (err: any) {
       return rejectWithValue(err?.response?.data || "Error");
@@ -197,7 +196,7 @@ export const resetPassword = createAsyncThunk(
     try {
       dispatch(showLoader());
 
-      const response = await AuthService.resetPassword(data); // ✅ FIXED NAME
+      const response = await AuthService.resetPassword(data); //  FIXED NAME
 
       return response;
 
@@ -208,22 +207,26 @@ export const resetPassword = createAsyncThunk(
     }
   }
 );
-//  INITIAL STATE
-const initialState = {
-  user: null,
-  token: null,
-  loading: false,
-  error: null,
-  otpVerified: false,
-  resendSuccess: false,
-    privacy: null,  
-    forgotData: null as any,
-    otpVerified_forgot: false,
-    resetSuccess: false, 
-  
-  whitepaperData: null as any,
-  whitepaperSuccess: false,       
-};
+
+export const changePassword = createAsyncThunk(
+  "auth/changePassword",
+  async (data: any, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(showLoader());
+
+      const response = await AuthService.changePassword(data);
+
+      return response?.data;
+
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || "Change password failed"
+      );
+    } finally {
+      dispatch(hideLoader());
+    }
+  }
+);
 
 //whitePaper_download
 export const downloadWhitepaper = createAsyncThunk(
@@ -245,6 +248,47 @@ export const downloadWhitepaper = createAsyncThunk(
     }
   }
 );
+
+export const forgotPasswordEmail = createAsyncThunk(
+  "auth/forgotPasswordEmail",
+  async (data: any, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(showLoader());
+
+      const response = await AuthService.forgotPassword_with_email(data);
+
+      return response;
+
+    } catch (err: any) {
+      return rejectWithValue(
+        err?.response?.data || "Forgot password (email) failed"
+      );
+    } finally {
+      dispatch(hideLoader());
+    }
+  }
+);
+//  INITIAL STATE
+const initialState = {
+  user: null,
+  token: null,
+  loading: false,
+  error: null,
+  otpVerified: false,
+  resendSuccess: false,
+    privacy: null,  
+    forgotData: null as any,
+    otpVerified_forgot: false,
+    resetSuccess: false, 
+  
+  whitepaperData: null as any,
+  whitepaperSuccess: false,  
+  changePasswordSuccess: false,  
+  forgotEmailData: null as any,
+forgotEmailSuccess: false,   
+};
+
+
 //  SLICE
 const authSlice = createSlice({
   name: "auth",
@@ -300,8 +344,9 @@ const authSlice = createSlice({
 .addCase(verifyOtp.fulfilled, (state, action) => {
   state.loading = false;
   state.otpVerified = true;
+console.log(action.payload,"action.payloadaction.payload");
 
-  state.user = action.payload?.user || action.payload;
+  state.user = action.payload?.data || action.payload;
   state.token = action.payload?.token;
 })
 .addCase(verifyOtp.rejected, (state, action: any) => {
@@ -360,7 +405,7 @@ const authSlice = createSlice({
 })
 .addCase(verifyForgotOtp.fulfilled, (state) => {
   state.loading = false;
-  state.otpVerified_forgot = true; // ✅ FIXED
+  state.otpVerified_forgot = true; //  FIXED
 })
 .addCase(verifyForgotOtp.rejected, (state, action: any) => {
   state.loading = false;
@@ -397,7 +442,36 @@ const authSlice = createSlice({
   state.loading = false;
   state.error = action.payload;
   state.whitepaperSuccess = false;
-});
+})
+// CHANGE PASSWORD
+.addCase(changePassword.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+})
+.addCase(changePassword.fulfilled, (state, action) => {
+  state.loading = false;
+  state.changePasswordSuccess = true
+})
+.addCase(changePassword.rejected, (state, action: any) => {
+  state.loading = false;
+  state.changePasswordSuccess = false
+})
+// FORGOT PASSWORD (EMAIL)
+.addCase(forgotPasswordEmail.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+  state.forgotEmailSuccess = false;
+})
+.addCase(forgotPasswordEmail.fulfilled, (state, action) => {
+  state.loading = false;
+  state.forgotEmailData = action.payload;
+  state.forgotEmailSuccess = true;
+})
+.addCase(forgotPasswordEmail.rejected, (state, action: any) => {
+  state.loading = false;
+  state.error = action.payload;
+  state.forgotEmailSuccess = false;
+})
 }
 });
 

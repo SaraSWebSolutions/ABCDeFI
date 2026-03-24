@@ -53,12 +53,11 @@ const dispatch = useDispatch<any>();
 const { timerIcoData, error } = useSelector(
   (state: RootState) => state.home
 );
-const { rewardStatus } = useSelector(
+const { rewardStatus,rewardData } = useSelector(
   (state: RootState) => state.home
 );
   const { profileData } = useSelector((state: RootState) => state.profile);
 
-// console.log(user,'rewardStatus');
 
 useEffect(() => {
         dispatch(fetchProfile());
@@ -68,7 +67,6 @@ useEffect(() => {
   
 }, []);
 useEffect(() => {
-  console.log(timerIcoData,'timerIcoData');
   
   if (!timerIcoData) return;
 
@@ -115,7 +113,7 @@ useFocusEffect(
           { text: "Exit", onPress: () => BackHandler.exitApp() },
         ]
       );
-      return true; // ✅ VERY IMPORTANT
+      return true; //  VERY IMPORTANT
     };
 
     const subscription = BackHandler.addEventListener(
@@ -129,9 +127,8 @@ useFocusEffect(
 const requestStoragePermission = async () => {
 
   if (Platform.OS !== "android") return true;
- console.log(Platform.Version,"Platform.Version");
  
-   // ✅ Android 13+
+   //  Android 13+
    if (Platform.Version >= 29) {
      return true; // no permission needed
    }
@@ -182,7 +179,7 @@ const handleDownloadWhitepaper = async () => {
     Alert.alert("Download started");
 
   } catch (err: any) {
-    console.log("Download error:", err);
+    // console.log("Download error:", err);
     Alert.alert("Error", err?.message || "Download failed");
   }
 };
@@ -237,7 +234,7 @@ return (
     </View>
   </TouchableOpacity>
 
-  {/* ✅ Separate bell */}
+  {/*  Separate bell */}
   <View style={styles.bell}>
     <Icon name="notifications-outline" size={24} color="#FFF" />
   </View>
@@ -406,7 +403,7 @@ style={styles.trophy}
 
               <View style={styles.rewardRight}>
                 <Text style={styles.coin}>🪙</Text>
-                <Text style={styles.points}>300</Text>
+                <Text style={styles.points}>{rewardData?.points}</Text>
               </View>
 
             </LinearGradient>
