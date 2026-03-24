@@ -16,13 +16,24 @@ import { useResponsive } from "../Utils/Responsive";
 import Fonts from "../Utils/Fonts";
 import { Colors } from "../Utils/Colors";
 import LinearGradient from "react-native-linear-gradient";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { getFaq } from "../Store/Slices/contentSlice";
 export default function HelpSupportScreen({ navigation }: any) {
   const { wp, hp, font, space } = useResponsive();
+const dispatch = useDispatch<any>();
 
+useEffect(() => {
+  dispatch(getFaq());
+}, []);
+const { faq, loading } = useSelector((state: any) => state.content);
   const styles = createStyles(wp, hp, font, space); 
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
-  const faqs = [
+// const toggleFAQ = (index: number) => {
+//   setActiveIndex(activeIndex === index ? null : index);
+// };
+  const faqs1 = [
     {
       question: "How do I update my profile?",
       answer: "Go to Settings → Edit Profile and update your details.",
@@ -61,32 +72,39 @@ export default function HelpSupportScreen({ navigation }: any) {
       
 
         {/* FAQ SECTION */}
-        <Text style={styles.sectionTitle}>FAQs</Text>
+       <Text style={styles.sectionTitle}>FAQs</Text>
 
-        {faqs.map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.faqCard}
-            onPress={() => toggleFAQ(index)}
-          >
-            <View style={styles.faqRow}>
-              <Text style={styles.question}>{item.question}</Text>
-              <Ionicons
-                name={
-                  activeIndex === index
-                    ? "chevron-up-outline"
-                    : "chevron-down-outline"
-                }
-                size={font(18)}
-              />
-            </View>
+{loading ? (
+  <Text>Loading...</Text>
+) : faq?.length > 0 ? (
+  faq.map((item: any, index: number) => (
+    <TouchableOpacity
+      key={index}
+      style={styles.faqCard}
+      onPress={() => toggleFAQ (index)}
+    >
+      <View style={styles.faqRow}>
+        <Text style={styles.question}>{item.question}</Text>
 
-            {activeIndex === index && (
-              <Text style={styles.answer}>{item.answer}</Text>
-            )}
-          </TouchableOpacity>
-        ))}
+        <Ionicons
+          name={
+            activeIndex === index
+              ? "chevron-up"
+              : "chevron-down"
+          }
+          size={18}
+          color="#333"
+        />
+      </View>
 
+      {activeIndex === index && (
+        <Text style={styles.answer}>{item.answer}</Text>
+      )}
+    </TouchableOpacity>
+  ))
+) : (
+  <Text>No FAQs available</Text>
+)}
         {/* CONTACT SECTION */}
         <Text style={[styles.sectionTitle, { marginTop: hp(3) }]}>
           Contact Us

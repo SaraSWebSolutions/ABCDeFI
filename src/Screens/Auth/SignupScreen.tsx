@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState,useRef } from "react";
 import {
   View,
   Text,
@@ -34,8 +34,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { registerUser, getPrivacy } from "../../Store/Slices/authSlice";
 import PhoneInput from "react-native-phone-number-input";
 import {Snackbar} from "react-native-snackbar";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 export const SignupScreen = ({ navigation }: any) => {
-
+const phoneRef = useRef(null);
   const { font } = useResponsive();
   const dispatch = useDispatch<any>();
   const [username, setUsername] = useState("");
@@ -93,7 +94,7 @@ const [search, setSearch] = useState("");
 
     try {
 
-      // ✅ Prepare payload (IMPORTANT)
+      //  Prepare payload (IMPORTANT)
       const payload = {
         name: username,
         email: email.toLowerCase().trim(),
@@ -106,39 +107,34 @@ mobileNumber: phone,
 
       };
 
-      console.log("REGISTER PAYLOAD:", payload);
+      // console.log("REGISTER PAYLOAD:", payload);
 
-      // ✅ API CALL via Redux
       const res = await dispatch(registerUser(payload)).unwrap();
-// if (res?.otp) {
-//   Snackbar.show({
-//     text: `Your OTP is ${res.otp}`,
-//     duration: Snackbar.LENGTH_LONG,
-//   });
-// }
-      console.log("Register Success:", res);
+
+      // console.log("Register Success:", res);
 
 Alert.alert(
   "Success",
   res?.message
   // `Registration completed successfully.\n\n Your One-Time Password (OTP): ${res?.otp}`
 );
-      // 👉 Navigate (depends on API)
-      //navigation.navigate("Login"); 
-      // OR
-      navigation.navigate("OtpVerify", { isforgot: false, userId: res?._id });
+      
+      navigation.navigate("OtpVerify", { isforgot: false, userId: res?.userId });
 setUsername("");
 setMobile("");
-setPhone('');
+setPhone("");
 setEmail("");
 setPassword("");
 setConfirmPassword("");
 setGender("");
 setCountry("");
 setAgree(false);
+phoneRef.current?.setState({
+  number: "",
+});
     } catch (err: any) {
 
-      console.log("Register Error:", err);
+      // console.log("Register Error:", err);
 
       Alert.alert("Register Failed", err?.message || "Something went wrong");
     }
@@ -176,20 +172,25 @@ setAgree(false);
             <Text style={styles.errorText}>{errors.username}</Text>
           ) : null}
          <PhoneInput
+         
   defaultValue={phone}
   defaultCode="IN"
   layout="first"
+   ref={phoneRef}
   onChangeText={(text) => {
     setPhone(text); // only number
   }}
   textInputProps={{
-    placeholder: "Enter Mobile Number",   // ✅ placeholder here
-    placeholderTextColor: "#999"
+    placeholder: "Enter Mobile Number",   //  placeholder here
+    placeholderTextColor: "#999",
+     keyboardType: "number-pad",
   }}
   onChangeFormattedText={(text) => {
     setMobile(text); // +91 9876543210
   }}
   onChangeCountry={(country) => {
+        AsyncStorage.setItem("countrycode",country.callingCode[0]);
+
     setCountryCode(country.callingCode[0]); // 👈 important
   }}
   
@@ -350,7 +351,7 @@ setAgree(false);
               style={styles.agreeRow}
               onPress={() => {
                 if (!hasReadPolicy) {
-                  Alert.alert("Please read Privacy Policy first");
+                  Alert.alert("Please read Privacy & Data Consent first");
                   return;
                 }
                 setAgree(!agree);

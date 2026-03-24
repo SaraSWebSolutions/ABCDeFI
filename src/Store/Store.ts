@@ -4,6 +4,7 @@ import loaderReducer from "./Slices/loaderSlice";
 import authReducer from "./Slices/authSlice";
 import profileReducer from "./Slices/profileSlice"
 import homeReducer from "./Slices/homeSlice";
+import contentReducer from "./Slices/contentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -11,7 +12,8 @@ export const store = configureStore({
     loader:loaderReducer,
     auth:authReducer,
     profile:profileReducer,
-    home:homeReducer
+    home:homeReducer,
+    content:contentReducer
   },
   
    middleware: (getDefaultMiddleware) =>

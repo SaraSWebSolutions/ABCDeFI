@@ -1,15 +1,22 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { AuthService } from "../../Services/authService";
+import { showLoader, hideLoader } from "./loaderSlice";
 
 // 🔥 API CALL
 export const fetchTimerIco = createAsyncThunk(
   "home/fetchTimerIco",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue,dispatch }) => {
     try {
+            dispatch(showLoader()); //  start loader
+
       const response = await AuthService.timerIco();
       return response.data;
     } catch (err: any) {
+            dispatch(hideLoader()); //  start loader
+
       return rejectWithValue(err?.response?.data || "Something went wrong");
+    }finally {
+      dispatch(hideLoader()); //  stop loader
     }
   }
 );
@@ -17,13 +24,17 @@ export const fetchTimerIco = createAsyncThunk(
 //reward
 export const fetchReward = createAsyncThunk(
   "home/fetchReward",
-  async (data: any, { rejectWithValue }) => {
+  async (data: any, { rejectWithValue,dispatch }) => {
     try {
+      dispatch(showLoader())
       const response = await AuthService.reward(data)
+console.log(response);
 
       return response.data;
     } catch (err: any) {
       return rejectWithValue(err?.response?.data || "Something went wrong");
+    }finally {
+      dispatch(hideLoader()); //  stop loader
     }
   }
 );
@@ -32,14 +43,18 @@ export const fetchReward = createAsyncThunk(
 
 export const fetchRewardStatus = createAsyncThunk(
   "home/fetchRewardStatus",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue ,dispatch}) => {
     try {
+      dispatch(showLoader())
+      
       const response = await AuthService.rewardStatus();
-      return response.data;
+      return response;
     } catch (err: any) {
       return rejectWithValue(
         err?.response?.data || "Failed to fetch reward status"
       );
+    }finally {
+      dispatch(hideLoader()); //  stop loader
     }
   }
 );
@@ -81,23 +96,25 @@ const homeSlice = createSlice({
       })
       .addCase(fetchReward.fulfilled, (state, action) => {
          state.loading = false;
-  state.rewardData = action.payload;
+        state.rewardData = action.payload;
 
-  state.rewardStatus = true;
+        state.rewardStatus = true;
       })
       .addCase(fetchReward.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      // ✅ REWARD STATUS
+      //  REWARD STATUS
       .addCase(fetchRewardStatus.pending, (state) => {
         state.loading = true;
       })
       .addCase(fetchRewardStatus.fulfilled, (state, action) => {
-        console.log(action.payload,"action.payload");
+        // console.log(action.payload,"action.payload");
         
         state.loading = false;
-        state.rewardStatus = action.payload;
+          state.rewardData = action.payload;
+
+        state.rewardStatus = action.payload?.data;
       })
       .addCase(fetchRewardStatus.rejected, (state, action) => {
         state.loading = false;

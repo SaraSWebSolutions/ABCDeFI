@@ -48,13 +48,14 @@ export default function HomeScreen({ navigation }: any) {
   const switchChain = useSwitchActiveWalletChain();
   const address = account?.address;
   const isConnected = !!account;
-  const dispatch = useDispatch<any>();
-  const { timerIcoData, error } = useSelector(
-    (state: RootState) => state.home
-  );
-  const { rewardStatus } = useSelector(
-    (state: RootState) => state.home
-  );
+const dispatch = useDispatch<any>();
+
+const { timerIcoData, error } = useSelector(
+  (state: RootState) => state.home
+);
+const { rewardStatus,rewardData } = useSelector(
+  (state: RootState) => state.home
+);
   const { profileData } = useSelector((state: RootState) => state.profile);
 
   const [timeLeft, setTimeLeft] = useState({
@@ -68,16 +69,16 @@ export default function HomeScreen({ navigation }: any) {
   const activeAccount = useActiveAccount();
   const status = useActiveWalletConnectionStatus();
 
-  useEffect(() => {
-    dispatch(fetchProfile());
-    dispatch(fetchTimerIco());
-    dispatch(fetchRewardStatus());
-  }, []);
+useEffect(() => {
+        dispatch(fetchProfile());
 
-  useEffect(() => {
-    console.log(timerIcoData, 'timerIcoData');
-
-    if (!timerIcoData) return;
+  dispatch(fetchTimerIco());
+  dispatch(fetchRewardStatus());
+  
+}, []);
+useEffect(() => {
+  
+  if (!timerIcoData) return;
 
     const targetDate = new Date(timerIcoData);
 
@@ -191,22 +192,21 @@ export default function HomeScreen({ navigation }: any) {
 
   const requestStoragePermission = async () => {
 
-    if (Platform.OS !== "android") return true;
-    console.log(Platform.Version, "Platform.Version");
-
-    // ✅ Android 13+
-    if (Platform.Version >= 29) {
-      return true; // no permission needed
-    }
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
-    );
-
-    return granted === PermissionsAndroid.RESULTS.GRANTED;
-  };
-  const handleDownloadWhitepaper = async () => {
-    try {
-      const hasPermission = await requestStoragePermission();
+  if (Platform.OS !== "android") return true;
+ 
+   //  Android 13+
+   if (Platform.Version >= 29) {
+     return true; // no permission needed
+   }
+ const granted = await PermissionsAndroid.request(
+     PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+   );
+ 
+   return granted === PermissionsAndroid.RESULTS.GRANTED;
+};
+const handleDownloadWhitepaper = async () => {
+  try {
+    const hasPermission = await requestStoragePermission();
 
       if (!hasPermission) {
         Alert.alert("Permission denied");
@@ -244,27 +244,27 @@ export default function HomeScreen({ navigation }: any) {
 
       Alert.alert("Download started");
 
-    } catch (err: any) {
-      console.log("Download error:", err);
-      Alert.alert("Error", err?.message || "Download failed");
-    }
-  };
-  const handleAnswer = (value: "yes" | "no") => {
-    dispatch(fetchReward({ response: value }))
-      .unwrap()
-      .then(() => {
-        dispatch(fetchRewardStatus()); // optional refresh
-      });
-  };
-  const imageUrl = profileData?.image
-    ? IMAGE_URL + profileData.image
-    : null;
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 80 }}
-        showsVerticalScrollIndicator={false}
-      >
+  } catch (err: any) {
+    // console.log("Download error:", err);
+    Alert.alert("Error", err?.message || "Download failed");
+  }
+};
+const handleAnswer = (value: "yes" | "no") => {
+  dispatch(fetchReward({ response: value }))
+    .unwrap()
+    .then(() => {
+      dispatch(fetchRewardStatus()); // optional refresh
+    });
+};
+const imageUrl = profileData?.image
+  ? IMAGE_URL + profileData.image
+  : null;
+return (
+<SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+  <ScrollView
+    contentContainerStyle={{ paddingBottom: 80 }}
+    showsVerticalScrollIndicator={false}
+  >
 
         <View style={styles.container}>
 
@@ -300,10 +300,10 @@ export default function HomeScreen({ navigation }: any) {
                 </View>
               </TouchableOpacity>
 
-              {/* ✅ Separate bell */}
-              <View style={styles.bell}>
-                <Icon name="notifications-outline" size={24} color="#FFF" />
-              </View>
+  {/*  Separate bell */}
+  <View style={styles.bell}>
+    <Icon name="notifications-outline" size={24} color="#FFF" />
+  </View>
 
             </View>
 
@@ -494,10 +494,10 @@ style={styles.joinGradient}
 
                   <Text style={styles.rewardText}>Reward Points</Text>
 
-                  <View style={styles.rewardRight}>
-                    <Text style={styles.coin}>🪙</Text>
-                    <Text style={styles.points}>300</Text>
-                  </View>
+              <View style={styles.rewardRight}>
+                <Text style={styles.coin}>🪙</Text>
+                <Text style={styles.points}>{rewardData?.points}</Text>
+              </View>
 
                 </LinearGradient>
 

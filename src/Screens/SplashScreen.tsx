@@ -39,7 +39,6 @@ export const SplashScreen = ({ navigation }: any) => {
       }, 3000);
 
     } catch (error) {
-      console.log("Splash API Error:", error);
       setTimeout(() => {
         navigation.replace("Login");
       }, 3000);

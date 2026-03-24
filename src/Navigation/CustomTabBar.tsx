@@ -11,23 +11,40 @@ import {
 import { useResponsive } from "../Utils/Responsive";
 import { Colors } from "../Utils/Colors";
 import Fonts from "../Utils/Fonts";
+import Home from '../../assets/Icons/Home.svg';
+import AI from '../../assets/Icons/AI.svg';
+import ICO from '../../assets/Icons/ICO.svg';
+import NFT from '../../assets/Icons/NFT.svg';
+import Home_white from '../../assets/Icons/Home_white.svg';
+import AI_white from '../../assets/Icons/AI_white.svg';
+import ICO_white from '../../assets/Icons/ICO_white.svg';
+import NFT_white from '../../assets/Icons/NFT_white.svg';
 
 export const CustomTabBar = ({ state, navigation }: any) => {
 
   const { wp, hp, font, radius } = useResponsive();
 
-  const getIcon = (routeName: string) => {
-    switch (routeName) {
-      case "Home":
-        return require("../../assets/Icons/Home.png");
-      case "ICO":
-        return require("../../assets/Icons/ICO.png");
-      case "AIScreen":
-        return require("../../assets/Icons/AI.png");
-      case "NFT":
-        return require("../../assets/Icons/NFT.png");
-    }
-  };
+ 
+
+  //  Return SVG COMPONENT (not require)
+ const getIcon = (routeName: string, isFocused: boolean) => {
+  switch (routeName) {
+    case "Home":
+      return isFocused ? Home_white : Home;
+
+    case "ICO":
+      return isFocused ? ICO_white : ICO;
+
+    case "AIScreen":
+      return isFocused ? AI_white : AI;
+
+    case "NFT":
+      return isFocused ? NFT_white : NFT;
+
+    default:
+      return isFocused ? Home_white : Home;
+  }
+};
 
   return (
     <View
@@ -61,6 +78,7 @@ export const CustomTabBar = ({ state, navigation }: any) => {
           const onPress = () => {
             navigation.navigate(route.name);
           };
+          const IconComponent = getIcon(route.name,isFocused); //  get SVG
 
           return (
             <TouchableOpacity
@@ -83,13 +101,11 @@ export const CustomTabBar = ({ state, navigation }: any) => {
                   isFocused && styles.activeIcon
                 ]}
               >
-                <Image
-                  source={getIcon(route.name)}
-                  style={{
-                    width: wp(7),
-                    height: wp(7),
-                    tintColor: isFocused ? "#fff" : "#666",
-                  }}
+                 <IconComponent
+                  width={wp(7)}
+                  height={wp(7)}
+                   
+                //  fill={isFocused ? "#fff" : "#434246"} //  dynamic color
                 />
               </View>
 
@@ -100,7 +116,7 @@ export const CustomTabBar = ({ state, navigation }: any) => {
                   fontSize: font(12),
                   fontFamily: Fonts.medium,
 
-                  color: isFocused?Colors.primary: "#000",
+                  color: isFocused?Colors.primary: "#434246",
                 }}
               >
                 {route.name === "AIScreen" ? "59C AI" : route.name}

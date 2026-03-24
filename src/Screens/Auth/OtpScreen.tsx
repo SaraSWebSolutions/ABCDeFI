@@ -63,7 +63,7 @@ const handleChange = (text: string, index: number) => {
   setOtp(newOtp);
   setError("");
 
-  // ✅ Move forward only if typed
+  //  Move forward only if typed
   if (text && index < otp.length - 1) {
     inputs.current[index + 1]?.focus();
   }
@@ -73,14 +73,14 @@ const handleKeyPress = (e: any, index: number) => {
   if (e.nativeEvent.key === "Backspace") {
     let newOtp = [...otp];
 
-    // ✅ If current box has value → clear it
+    //  If current box has value → clear it
     if (otp[index]) {
       newOtp[index] = "";
       setOtp(newOtp);
       return;
     }
 
-    // ✅ If empty → move back and clear previous
+    //  If empty → move back and clear previous
     if (index > 0) {
       newOtp[index - 1] = "";
       setOtp(newOtp);
@@ -149,7 +149,7 @@ const verifyOtpHandler = async () => {
 
       Alert.alert(res.message || "OTP Verified");
 
-      // ✅ ONLY go to Reset
+      //  ONLY go to Reset
       navigation.navigate("Reset", {
         userId: route?.params?.userId,
       });
@@ -167,7 +167,7 @@ const verifyOtpHandler = async () => {
 
       Alert.alert(res.message || "OTP Verified");
 
-      // ✅ ONLY go to Main
+      //  ONLY go to Main
       navigation.replace("Main");
     }
 

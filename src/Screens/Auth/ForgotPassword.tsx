@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Fonts from "../../Utils/Fonts";
 import { Colors } from "../../Utils/Colors";
 import { useDispatch } from "react-redux";
-import { forgotPasswordMobile } from "../../Store/Slices/authSlice";
+import { forgotPasswordMobile ,forgotPasswordEmail} from "../../Store/Slices/authSlice";
 
 export const ForgotPasswordScreen = ({navigation}:any) => {
 const dispatch = useDispatch<any>();
@@ -37,23 +37,43 @@ return /^[0-9]{10}$/.test(phone);
 const sendOtp = async () => {
 
   // 🔹 EMAIL FLOW (optional - if API exists)
-  if (method === "email") {
-    if (!validateEmail(value)) {
-      setError("Enter valid email");
-      return;
-    }
-
-    setError("");
-
-    // 👉 If you have email API, call here
-    navigation.navigate("OtpVerify", {
-      contact: value,
-      isforgot: true,
-      type: "email"
-    });
-
+ // 🔹 EMAIL FLOW
+if (method === "email") {
+  if (!validateEmail(value)) {
+    setError("Enter valid email");
     return;
   }
+
+  setError("");
+
+  try {
+    const res = await dispatch(
+      forgotPasswordEmail({
+        email: value
+      })
+    ).unwrap();
+
+    // console.log("Email Forgot Success:", res);
+
+    Alert.alert(
+      "Success",
+      "Reset link has been sent to your register email"
+    );
+
+    //  optional: go back or stay
+    navigation.goBack();
+
+  } catch (err: any) {
+    // console.log("Email Forgot Error:", err);
+
+    Alert.alert(
+      "Error",
+      err?.message || "Failed to send reset link"
+    );
+  }
+
+  return;
+}
 
   // 🔹 MOBILE FLOW (API CALL)
   if (method === "sms") {
@@ -72,10 +92,10 @@ const sendOtp = async () => {
         })
       ).unwrap();
 
-      console.log("Forgot Success:", res);
+      // console.log("Forgot Success:", res);
 Alert.alert(
-  "Success", res?.message
-  // `Your One-Time Password (OTP): ${res?.otp}`
+  "Success",
+   `Your One-Time Password (OTP): ${res?.otp}`
 );
       //  Navigate after success
       navigation.navigate("OtpVerify", {
@@ -86,7 +106,7 @@ Alert.alert(
       });
 
     } catch (err: any) {
-      console.log("Forgot Error:", err);
+      // console.log("Forgot Error:", err);
       Alert.alert(err?.message || "Failed to send OTP")
 
       // setError(err?.message || "Failed to send OTP");
@@ -177,8 +197,8 @@ We'll send a 4-digit OTP to verify your identity.
 </Text>
 
 <GradientButton
-title="Send OTP Code →"
-onPress={sendOtp}
+  title={method === "email" ? "Send Reset Link →" : "Send OTP Code →"}
+  onPress={sendOtp}
 />
 
 <TouchableOpacity

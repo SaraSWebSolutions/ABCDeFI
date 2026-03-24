@@ -32,7 +32,7 @@ import { updateProfile, fetchProfile } from "../Store/Slices/profileSlice";
 import { RootState } from "../Store/Store";
 import LinearGradient from "react-native-linear-gradient";
 import { IMAGE_URL } from "@env";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 export const EditProfileScreen = ({ navigation }: any) => {
   const { wp, hp, font, space } = useResponsive();
   const styles = createStyles(wp, hp, font, space); 
@@ -50,12 +50,22 @@ export const EditProfileScreen = ({ navigation }: any) => {
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
   const [search, setSearch] = useState("");
-
+const [countryCode, setCountryCode] = useState("");
   const genders = ["Male", "Female", "Other"];
 
-  useEffect(() => {
-    dispatch(fetchProfile());
-  }, []);
+ useEffect(() => {
+  dispatch(fetchProfile());
+
+  const loadCountryCode = async () => {
+    const code = await AsyncStorage.getItem("countrycode");
+    
+    if (code) {
+      setCountryCode(code);
+    }
+  };
+
+  loadCountryCode();
+}, []);
 
   useEffect(() => {
     if (profileData) {
@@ -84,10 +94,10 @@ const requestGalleryPermission = async () => {
 
   if (Platform.OS === "android") {
     if (Platform.Version >= 33) {
-      // ✅ Android 13+
+      //  Android 13+
       permission = PERMISSIONS.ANDROID.READ_MEDIA_IMAGES;
     } else {
-      // ✅ Android 12 and below
+      //  Android 12 and below
       permission = PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE;
     }
   } else {
@@ -147,7 +157,7 @@ if (image) {
     name: image.split("/").pop() || "profile.jpg",
   };
 
-  formData.append("profileImage", file);
+  formData.append("image", file);
 }
       // if (image) {
       //   formData.append("profileImage", {
@@ -162,7 +172,6 @@ if (image) {
       Alert.alert("Success", "Profile updated successfully");
       navigation.goBack();
     } catch (err) {
-      console.log(err,"profile");
       
       Alert.alert("Error", "Failed to update profile");
     }
@@ -202,7 +211,7 @@ const imageUrl = profileData?.image
           <Image
   source={
     image
-      ? { uri: image } // ✅ local preview
+      ? { uri: image } //  local preview
       : profileData?.image
       ? { uri: imageUrl}
       : require("../../assets/Images/place.jpg")
@@ -247,11 +256,12 @@ const imageUrl = profileData?.image
 
         {/*  PHONE (Disabled) */}
         <InputField
-          value={phone}
+  value={`${countryCode ? "+" + countryCode + " " : "+91 "}${phone}`}
           leftIcon="phone-call"
           placeholder="Phone Number"
           onChange={() => {}}
           editable={false}
+          
           inputStyle={{backgroundColor:'#E5E5E5'}}
           
         />

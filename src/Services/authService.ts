@@ -43,6 +43,13 @@ export const AuthService = {
     const response=await api.post('user/password-change',data);
     return response.data;
   },
+  
+
+  //Forgot with email
+  forgotPassword_with_email:async(data:any)=>{
+    const response=await api.post('user/forgot-password',data);
+    return response.data;
+  },
 
   // Forgot with Mobile Otp
   forgotPassword_with_mobile_verifyOtp:async(data:any)=>{
@@ -82,7 +89,7 @@ const response=await api.get('whitePaper/',data);
 
     //Reward
   reward:async(data:any)=>{
-      const response=await api.get('reward/',data);
+      const response=await api.post('reward/',data);
     return response.data;
   },
 
@@ -92,5 +99,31 @@ const response=await api.get('whitePaper/',data);
       const response=await api.post('reward/status-check');
     return response.data;
   },
+
+  //Changepassword
+  changePassword:async(data: void)=>{
+    const response=await api.post('user/change-password',data);
+    return response.data;
+  },
+
+  //Faq
+  faq:async(data: void)=>{
+    const response=await api.get('faq/');
+    return response.data;
+  },
+
+  //Terms
+  terms:async(data: void)=>{
+    const response=await api.get('terms/');
+    return response.data;
+  },
+
+  //About
+about:async(data: void)=>{
+    const response=await api.get('about/');
+    return response.data;
+  },
+
+
 
 };
