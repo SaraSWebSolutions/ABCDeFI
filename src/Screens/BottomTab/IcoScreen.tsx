@@ -14,6 +14,7 @@ import {
   Animated,
   Clipboard,
 } from 'react-native';
+import { checkWalletInstalled, showInstallationAlert, WALLET_METADATA } from '../../Utils/WalletDetection';
 import { useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
@@ -23,9 +24,11 @@ import Feather from 'react-native-vector-icons/Feather';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Jazzicon } from '@arturhoncharuk/react-native-jazzicon';
 import Fonts from '../../Utils/Fonts';
-import { ConnectButton, useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain, useActiveWallet } from 'thirdweb/react';
-import { thirdwebClient, activeChain, chains, bscTestnet_custom } from '../../Config/thirdwebConfig';
-import { connectButtonConfig } from '../../Config/walletConfig';
+import { useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain, useActiveWallet, useConnect, useDisconnect } from 'thirdweb/react';
+import { WalletModal } from '../../Components/WalletModal';
+import { createWallet, WalletId } from 'thirdweb/wallets';
+import { PROJECT_ID } from '@env';
+import { thirdwebClient, bscTestnet_custom } from '../../Config/thirdwebConfig';
 import { ethers } from 'ethers';
 import { ethers6Adapter } from 'thirdweb/adapters/ethers6';
 import icoABI from '../../abi/ico.json';
@@ -78,6 +81,7 @@ const TOKENS: Token[] = [
 ];
 
 const ICO_CONTRACT_ADDRESS = '0xd621d8479Fe77F44A7E644C3FC704D1614C93152';
+export const expected_chainID = 97;
 
 export default function IcoScreen() {
   const { wp, hp, font, radius, space } = useResponsive();
@@ -85,14 +89,23 @@ export default function IcoScreen() {
   const wallet = useActiveWallet();
   const chain = useActiveWalletChain();
   const switchChain = useSwitchActiveWalletChain();
+  const { connect} = useConnect();
+  const [showWalletModal, setShowWalletModal] = useState(false);
   const address = account?.address;
   const isConnected = !!account;
 
+
   useEffect(() => {
-    if (isConnected && chain && chain.id !== activeChain.id) {
-      switchChain(activeChain);
+    if (isConnected && chain && chain.id !== expected_chainID) {
+      console.log('Wrong network:', chain.name || `Chain ${chain.id}`);
+      try {
+        switchChain(bscTestnet_custom);
+
+      } catch (error) {
+        console.error('Error switching chain:', error);
+      }
     }
-  }, [isConnected, chain, activeChain, switchChain]);
+  }, [isConnected, chain, bscTestnet_custom, switchChain]);
 
   const [selectedToken, setSelectedToken] = useState<Token>(TOKENS[0]);
   const [purchaseAmount, setPurchaseAmount] = useState('');
@@ -134,10 +147,12 @@ export default function IcoScreen() {
           setAbcdAddress(abcdAddr);
         }
 
-        if (address && abcdAddr) {
+        if (address && abcdAddr && chain?.id === expected_chainID) {
           const abcdContract = new ethers.Contract(abcdAddr, erc20ABI, provider);
           const bal = await abcdContract.balanceOf(address);
           setAbcdBalance(ethers.formatUnits(bal, 18));
+        } else {
+          setAbcdBalance('0.00');
         }
 
       } catch (e) {
@@ -168,7 +183,8 @@ export default function IcoScreen() {
         const tokenAddr = token.address || '0x0000000000000000000000000000000000000000';
 
         // Fetch Balance if connected
-        if (address) {
+        // Fetch Balance if connected on correct network
+        if (address && chain?.id === expected_chainID) {
           try {
             if (token.symbol === 'BNB') {
               const bnbBal = await provider.getBalance(address);
@@ -181,6 +197,8 @@ export default function IcoScreen() {
           } catch (err) {
             balances[token.symbol] = '0.00';
           }
+        } else {
+          balances[token.symbol] = '0.00';
         }
 
         // Fetch Price
@@ -203,7 +221,7 @@ export default function IcoScreen() {
     fetchTokenData(true);
     const interval = setInterval(() => fetchTokenData(false), 15000);
     return () => clearInterval(interval);
-  }, [isConnected, address]);
+  }, [isConnected, address, chain?.id]);
 
   const amountToNumber = parseFloat(purchaseAmount) || 0;
   const currentTokenBalance = parseFloat(tokenBalances[selectedToken.symbol] || '0');
@@ -262,6 +280,40 @@ export default function IcoScreen() {
         marginLeft: space(2),
       }} />
     );
+  };
+
+  const handleWalletConnect = async (walletId: string) => {
+    try {
+      if (WALLET_METADATA[walletId]) {
+        const isInstalled = await checkWalletInstalled(walletId);
+        if (!isInstalled) {
+          showInstallationAlert(walletId);
+          return;
+        }
+      }
+
+      const wallet = createWallet(walletId as WalletId);
+
+      await connect(async () => {
+        await wallet.connect({
+          client: thirdwebClient,
+          chain: bscTestnet_custom,
+          walletConnect: {
+            projectId: PROJECT_ID,
+            appMetadata: {
+              name: "ABCDefi",
+              url: "https://abcdefi.com",
+              description: "ABCDefi - Your DeFi Platform",
+              logoUrl: "https://abcdefi.com/logo.png",
+            },
+          },
+        });
+        return wallet;
+      });
+      setShowWalletModal(false);
+    } catch (error) {
+      console.log("Local handle error (ICO):", error);
+    }
   };
 
   const buyTokens = async () => {
@@ -410,17 +462,31 @@ export default function IcoScreen() {
             </View>
 
             <View style={styles.walletBar}>
-              <View style={styles.networkBadge}>
-                <Image
-                  source={require('../../assets/Binance.png')}
-                  style={styles.miniBnbIcon}
-                />
-                <Text style={styles.networkName}>BSC</Text>
+              <View style={[styles.networkBadge, isConnected && chain && chain.id !== expected_chainID && {
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                borderColor: 'rgba(239, 68, 68, 0.3)',
+                borderWidth: 1,
+                paddingHorizontal: space(3)
+              }]}>
+                {isConnected && chain && chain.id !== expected_chainID ? (
+                  <Icon name="warning" size={wp(3.5)} color="#ef4444" style={{ marginRight: space(1.5) }} />
+                ) : (
+                  <Image
+                    source={require('../../assets/Binance.png')}
+                    style={styles.miniBnbIcon}
+                  />
+                )}
+                <Text style={[styles.networkName, isConnected && chain && chain.id !== expected_chainID && { color: '#ef4444' }]}>
+                  {isConnected && chain && chain.id !== expected_chainID ? (chain.name || 'Wrong') : 'BSC'}
+                </Text>
               </View>
 
-              <View style={styles.addressPill}>
+              <TouchableOpacity
+                style={styles.addressPill}
+              // onPress={() => isConnected && wallet ? disconnect(wallet) : setShowWalletModal(true)}
+              >
                 <Text style={styles.truncatedAddress}>
-                  {isConnected && address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Not Connected'}
+                  {isConnected && address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Connect'}
                 </Text>
                 <View style={styles.jazziconBox}>
                   {isConnected && address ? (
@@ -429,7 +495,7 @@ export default function IcoScreen() {
                     <Icon name="wallet" size={16} color="#4b5563" />
                   )}
                 </View>
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -541,20 +607,19 @@ export default function IcoScreen() {
               </Text>
             </View>
 
+
             {!isConnected ? (
-              <View style={{ marginTop: hp(4) }}>
-                <ConnectButton
-                  client={thirdwebClient}
-                  {...connectButtonConfig}
-                  chain={activeChain}
-                  chains={chains}
-                />
-              </View>
+              <TouchableOpacity
+                style={styles.buyBtn}
+                onPress={() => setShowWalletModal(true)}
+              >
+                <Text style={styles.buyBtnText}>CONNECT WALLET</Text>
+              </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={[styles.buyBtn, (isPurchasing || isInsufficient) && { backgroundColor: '#2d2d30' }]}
+                style={[styles.buyBtn, (isPurchasing || isInsufficient || (isConnected && chain && chain.id !== expected_chainID)) && { backgroundColor: '#2d2d30' }]}
                 onPress={buyTokens}
-                disabled={isPurchasing || isInsufficient}
+                disabled={isPurchasing || isInsufficient || (isConnected && chain && chain.id !== expected_chainID)}
               >
                 <View style={{
                   flexDirection: 'row',
@@ -562,10 +627,10 @@ export default function IcoScreen() {
                   justifyContent: 'center',
                   width: '100%'
                 }}>
-                  <Text style={[styles.buyBtnText, (isPurchasing || isInsufficient) && { color: '#6b7280' }]}>
-                    {isPurchasing ? 'Processing...' : isInsufficient ? 'Insufficient Balance' : 'BUY ABCD'}
+                  <Text style={[styles.buyBtnText, (isPurchasing || isInsufficient || (isConnected && chain && chain.id !== expected_chainID)) && { color: '#6b7280' }]}>
+                    {isPurchasing ? 'Processing...' : isInsufficient ? 'Insufficient Balance' : (isConnected && chain && chain.id !== expected_chainID) ? 'WRONG NETWORK' : 'BUY ABCD'}
                   </Text>
-                  {!isPurchasing && !isInsufficient && (
+                  {!isPurchasing && !isInsufficient && !(isConnected && chain && chain.id !== expected_chainID) && (
                     <Image
                       source={require('../../assets/rocket.png')}
                       style={{ width: wp(6.5), height: wp(8), marginTop: -6, marginLeft: space(2.5) }}
@@ -740,6 +805,12 @@ export default function IcoScreen() {
             </View>
           </View>
         </Modal>
+
+        <WalletModal
+          visible={showWalletModal}
+          onClose={() => setShowWalletModal(false)}
+          onWalletConnect={handleWalletConnect}
+        />
       </ScrollView>
       <Toast />
     </SafeAreaView >
@@ -1385,5 +1456,24 @@ const createStyles = (
       color: '#7042f8',
       fontSize: font(12),
       fontFamily: Fonts.bold,
+    },
+    wrongNetworkBanner: {
+      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+      paddingVertical: space(2),
+      paddingHorizontal: space(4),
+      borderRadius: radius(2),
+      marginBottom: hp(2),
+      borderWidth: 1,
+      borderColor: 'rgba(239, 68, 68, 0.3)',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: hp(-2),
+    },
+    wrongNetworkText: {
+      color: '#ef4444',
+      fontSize: font(12),
+      fontFamily: Fonts.bold,
+      marginLeft: space(2),
     },
   });

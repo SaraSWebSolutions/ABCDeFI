@@ -65,7 +65,7 @@ export const SplashScreen = ({ navigation }: any) => {
     >
       <View style={styles.container}>
 <FastImage
-source={require('../../assets/Images/Splash_logo.png')}
+source={require('../../assets/Images/splash_logo.png')}
   // source={
   //   data?.data?.[0]?.image
   //     ? {
@@ -73,7 +73,7 @@ source={require('../../assets/Images/Splash_logo.png')}
   //         priority: FastImage.priority.high,
   //         cache: FastImage.cacheControl.immutable,
   //       }
-  //     : require("../../assets/Images/Splash_logo.png")
+  //     : require("../../assets/Images/splash_logo.png")
   // }
   style={{
     marginTop: hp(23),
