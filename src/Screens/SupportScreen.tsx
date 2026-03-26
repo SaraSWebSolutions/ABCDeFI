@@ -118,7 +118,7 @@ const [activeIndex, setActiveIndex] = useState<number | null>(null);
             onPress={() => Linking.openURL("tel:+919876543210")}
           >
             <MaterialCommunityIcons name="phone" size={font(20)} />
-            <Text style={styles.contactText}>Call Support</Text>
+            <Text style={styles.contactText}>+919876543210</Text>
           </TouchableOpacity>
 
           {/* EMAIL */}

@@ -366,8 +366,8 @@ phoneRef.current?.setState({
 
               <Text style={styles.agreeText}>
                 I've read and agree to the{" "}
-                <Text style={styles.link}>Terms of Service</Text> and{" "}
-                <Text style={styles.link}>Privacy Policy</Text>.
+                <Text onPress={()=>navigation.navigate("ContentScreen", { type: "terms" })} style={styles.link}>Terms of Service</Text> and{" "}
+                <Text onPress={()=>navigation.navigate("ContentScreen", { type: "privacy" })}style={styles.link}>Privacy Policy</Text>.
                 I consent to the collection and processing of my personal data.
               </Text>
 

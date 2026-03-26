@@ -49,6 +49,7 @@ const [rewardShow, setRewardShow] = useState(false);
   const address = account?.address;
   const isConnected = !!account;
 const dispatch = useDispatch<any>();
+const [imgError, setImgError] = useState(false);
 
 const { timerIcoData, error } = useSelector(
   (state: RootState) => state.home
@@ -191,8 +192,10 @@ const handleAnswer = (value: "yes" | "no") => {
     });
 };
 const imageUrl = profileData?.image
-  ? IMAGE_URL + profileData.image
+  ? `${IMAGE_URL.replace(/\/$/, "")}/${profileData.image.replace(/^\//, "")}`
   : null;
+console.log("IMAGE_URL:", imgError,IMAGE_URL);
+console.log("FINAL URL:", IMAGE_URL + profileData?.image);
 return (
 <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
   <ScrollView
@@ -218,13 +221,20 @@ return (
     style={{ flexDirection: "row", alignItems: "center" }}
   >
     <FastImage
-      source={
-        imageUrl
-          ? { uri: imageUrl }
-          : require("../../../assets/Images/place.jpg")
-      }
-      style={styles.avatar}
-    />
+
+  key={imageUrl}
+  source={
+    imageUrl && !imgError
+      ? { uri: imageUrl }
+      : require("../../../assets/Images/place.jpg")
+  }
+  style={styles.avatar}
+  onError={() => setImgError(true)}
+  resizeMode="cover"
+
+    defaultSource={require("../../../assets/Images/place.jpg")}
+
+/>
 
     <View style={{ marginLeft: 10 }}>
       <Text style={styles.greet}>Welcome back !</Text>
@@ -235,9 +245,9 @@ return (
   </TouchableOpacity>
 
   {/*  Separate bell */}
-  <View style={styles.bell}>
+  <TouchableOpacity onPress={()=>navigation.navigate('NotificationScreen')} style={styles.bell}>
     <Icon name="notifications-outline" size={24} color="#FFF" />
-  </View>
+  </TouchableOpacity>
 
 </View>
 

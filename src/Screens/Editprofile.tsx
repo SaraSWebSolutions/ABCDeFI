@@ -33,6 +33,7 @@ import { RootState } from "../Store/Store";
 import LinearGradient from "react-native-linear-gradient";
 import { IMAGE_URL } from "@env";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import FastImage from "react-native-fast-image";
 export const EditProfileScreen = ({ navigation }: any) => {
   const { wp, hp, font, space } = useResponsive();
   const styles = createStyles(wp, hp, font, space); 
@@ -46,6 +47,7 @@ export const EditProfileScreen = ({ navigation }: any) => {
   const [gender, setGender] = useState("");
   const [country, setCountry] = useState("");
   const [image, setImage] = useState<any>(null);
+const [imgError, setImgError] = useState(false);
 
   const [showCountryModal, setShowCountryModal] = useState(false);
   const [showGenderModal, setShowGenderModal] = useState(false);
@@ -185,7 +187,7 @@ const capitalize = (text: string) => {
   return text.charAt(0).toUpperCase() + text.slice(1);
 };
 const imageUrl = profileData?.image
-  ? IMAGE_URL + profileData.image
+  ? `${IMAGE_URL.replace(/\/$/, "")}/${profileData.image.replace(/^\//, "")}`
   : null;
   return (
     
@@ -208,15 +210,22 @@ const imageUrl = profileData?.image
 
         {/* PROFILE IMAGE */}
         <TouchableOpacity style={styles.imageWrapper} onPress={pickImage}>
-          <Image
+          <FastImage
+
+  key={image || imageUrl}
   source={
     image
-      ? { uri: image } //  local preview
-      : profileData?.image
-      ? { uri: imageUrl}
+      ? { uri: image }
+      : imageUrl && !imgError
+      ? { uri: imageUrl }
       : require("../../assets/Images/place.jpg")
   }
   style={styles.profileImage}
+  onError={() => setImgError(true)}
+  resizeMode="cover"
+
+    defaultSource={require("../../assets/Images/place.jpg")}
+
 />
          {/* <Image
   source={

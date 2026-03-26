@@ -191,10 +191,10 @@ onChange={(text) => {
 }}/>
 
 {error ? <Text style={styles.error}>{error}</Text>:null}
-
+{method === "sms"?
 <Text style={styles.infoText}>
 We'll send a 4-digit OTP to verify your identity.
-</Text>
+</Text>:<Text style={[styles.infoText,{marginBottom:0}]}></Text>}
 
 <GradientButton
   title={method === "email" ? "Send Reset Link →" : "Send OTP Code →"}
@@ -257,7 +257,7 @@ marginBottom:20
 methodBtn:{
 flex:1,
 padding:14,
-backgroundColor:"#EEE",
+backgroundColor:"#fff",
 borderRadius:12,
 alignItems:"center",
 justifyContent:"center"

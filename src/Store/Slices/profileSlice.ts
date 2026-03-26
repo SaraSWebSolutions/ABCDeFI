@@ -119,6 +119,8 @@ const profileSlice = createSlice({
         fetchProfile.fulfilled,
         (state, action: PayloadAction<User>) => {
           state.loading = false;
+          console.log(action.payload,'action.payload');
+          
           state.profileData = action.payload;
         }
       )

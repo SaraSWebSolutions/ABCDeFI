@@ -38,6 +38,8 @@ const [phone,setPhone] = useState("*****2565789");
 const [address,setAddress] = useState("*************");
 const [city,setCity] = useState("Hydrabad");
 const [country,setCountry] = useState("India");
+const [imgError, setImgError] = useState(false);
+
 useEffect(() => {
   dispatch(fetchProfile());
 }, []);
@@ -80,20 +82,31 @@ const handleLogout = () => {
     ]
   );
 };
+
 const imageUrl = profileData?.image
-  ? IMAGE_URL + profileData.image
+  ? `${IMAGE_URL.replace(/\/$/, "")}/${profileData.image.replace(/^\//, "")}`
   : null;
 return (
 
 <SafeAreaView style={{flex:1,backgroundColor:"#fff"}}>
-
+<LinearGradient
+         colors={["#7B3EF0", "#3F0D97"]}
+         style={styles.header}
+       >
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={26} color={'#FFF'}/>
+          </TouchableOpacity>
+          <Text style={[styles.title, { fontSize: font(20),textAlign:'center' }]}>
+            Settings
+          </Text>
+        </LinearGradient>
 <ScrollView showsVerticalScrollIndicator={false}   contentContainerStyle={{ flexGrow: 1 }}>
 
 <View style={styles.container}>
 
 {/* HEADER */}
-
-<View style={styles.header}>
+  
+{/* <View style={styles.header}>
 
 <TouchableOpacity  onPress={()=>navigation.goBack()}
 style={styles.iconBtn}>
@@ -103,19 +116,26 @@ style={styles.iconBtn}>
 <Text style={styles.title}>Settings</Text>
 
 <TouchableOpacity style={styles.iconBtn}>
-{/* <Ionicons name="notifications-outline" size={font(20)} color="#4A2AA7" /> */}
+{/* <Ionicons name="notifications-outline" size={font(20)} color="#4A2AA7" /> 
 </TouchableOpacity>
 
-</View>
+</View> */}
 
   <View style={styles.profileCard}>
          <FastImage
+
+  key={imageUrl}
   source={
-    imageUrl
+    imageUrl && !imgError
       ? { uri: imageUrl }
       : require("../../assets/Images/place.jpg")
   }
   style={styles.profileImg}
+  onError={() => setImgError(true)}
+  resizeMode="cover"
+
+    defaultSource={require("../../assets/Images/place.jpg")}
+
 />
 
           <View style={{ marginLeft: space(3), flex: 1 }}>
@@ -268,19 +288,23 @@ padding:space(5)
 
 },
 
-header:{
-flexDirection:"row",
-alignItems:"center",
-justifyContent:"space-between",
-marginBottom:hp(3),
+ header: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: hp(2),
+        padding:18,
+        
+      },
 
-},
-
-title:{
-fontSize:font(22),
-fontWeight:"700",
-color:"#4A2AA7"
-},
+      title: {
+        fontSize: font(20),
+        color:'#FFF',
+        marginTop:5,
+        fontFamily: Fonts.semiBold,
+        marginLeft: space(3),
+        textAlign:'center',
+        justifyContent:'center'
+      },
 profileCard: {
     flexDirection: "row",
     alignItems: "center",

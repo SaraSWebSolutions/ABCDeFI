@@ -17,6 +17,7 @@ import AccountSettingsScreen from "../Screens/AccoutSettings";
 import HelpSupportScreen from "../Screens/SupportScreen";
 import { ChangePasswordScreen } from "../Screens/ChangePassword";
 import ContentScreen from "../Screens/ContentScreen";
+import NotificationScreen from "../Screens/Notificationlist";
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 export default function AppNavigator() {
@@ -36,6 +37,8 @@ export default function AppNavigator() {
        <Stack.Screen name='HelpSupportScreen' component={HelpSupportScreen}/>
         <Stack.Screen name='ChangePasswordScreen' component={ChangePasswordScreen}/>
 <Stack.Screen name='ContentScreen' component={ContentScreen}/>
+<Stack.Screen name='NotificationScreen' component={NotificationScreen}/>
+
     </Stack.Navigator>
   );
 }
