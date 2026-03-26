@@ -1,8 +1,5 @@
 import { ThirdwebProvider } from "thirdweb/react";
 import { createThirdwebClient, defineChain } from "thirdweb";
-// import {bscTestnet} from 'viem/chains'
-import { bsc, polygon } from "thirdweb/chains";
-import { config } from "process";
 import { THIRDWEB_CLIENT_ID } from "@env";
 
 // load from env
@@ -42,10 +39,3 @@ export const bscTestnet_custom = /*#__PURE__*/ defineChain({
 })
 
 
-
-
-const activeChain = bscTestnet_custom;
-export { activeChain };
-
-const chains = [bscTestnet_custom,bsc];
-export { chains };

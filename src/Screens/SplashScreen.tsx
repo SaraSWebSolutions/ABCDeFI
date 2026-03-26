@@ -72,7 +72,7 @@ source={require('../../assets/Images/splash_logo.png')}
   //         priority: FastImage.priority.high,
   //         cache: FastImage.cacheControl.immutable,
   //       }
-  //     : require("../../assets/Images/Splash_logo.png")
+  //     : require("../../assets/Images/splash_logo.png")
   // }
   style={{
     marginTop: hp(23),
