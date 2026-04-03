@@ -89,7 +89,7 @@ export default function IcoScreen() {
   const wallet = useActiveWallet();
   const chain = useActiveWalletChain();
   const switchChain = useSwitchActiveWalletChain();
-  const { connect} = useConnect();
+  const { connect } = useConnect();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const address = account?.address;
   const isConnected = !!account;
@@ -120,6 +120,78 @@ export default function IcoScreen() {
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
   const [abcdBalance, setAbcdBalance] = useState('0.00');
   const [abcdTokenAddress, setAbcdAddress] = useState<string | null>(null);
+
+  // Verification States
+  const [isWalletVerified, setIsWalletVerified] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [hasConsent, setHasConsent] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+
+  useEffect(() => {
+    // Show validation popup if connected but not verified
+    if (isConnected && !isWalletVerified) {
+      setShowVerificationModal(true);
+    }
+  }, [isConnected, isWalletVerified]);
+
+  useEffect(() => {
+    // Reset state on disconnect
+    if (!account) {
+      setIsWalletVerified(false);
+      setShowVerificationModal(false);
+      setHasConsent(false);
+    }
+  }, [account]);
+
+  const handleVerifyWallet = async () => {
+    if (!hasConsent) {
+      Toast.show({ type: 'error', text1: 'Consent Required', text2: 'Please agree to the terms to proceed.' });
+      return;
+    }
+    if (!account) return;
+
+    setIsVerifying(true);
+    try {
+      const message = "Verify wallet ownership for ABCDeFI ICO. This wallet will be bound to your profile.";
+      const signature = await account.signMessage({ message });
+
+      // Simulating backend ecrecover API logic...
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // const expectedAddress = account.address;
+
+      // // Send the signature and address to your backend
+      // const response = await fetch('BACKEND_URL/api/verify-wallet', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     // Add Authorization token here if your user is logged in via JWT
+      //   },
+      //   body: JSON.stringify({
+      //     signature,
+      //     expectedAddress
+      //   })
+      // });
+      // const data = await response.json() as { success: boolean; error?: string };
+      // if (data.success) {
+      //     setIsWalletVerified(true);
+      //     setShowVerificationModal(false);
+      //     Toast.show({ type: 'success', text1: 'Verified!', text2: 'Your wallet is safely bound for the ICO.' });
+      // } else {
+      //     // If the backend returned false (e.g. signature mismatch)
+      //     throw new Error(data.error || "Wallet verification failed on server");
+      // }
+      
+      setIsWalletVerified(true);
+      setShowVerificationModal(false);
+      Toast.show({ type: 'success', text1: 'Verified!', text2: 'Your wallet is verified for the ICO.' });
+    } catch (error) {
+      console.log("Verification error: ", error);
+      Toast.show({ type: 'error', text1: 'Verification Failed', text2: 'You must sign the message to verify your wallet.' });
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   const fetchTokenData = async (showLoading = true) => {
     if (!address) {
@@ -618,8 +690,14 @@ export default function IcoScreen() {
             ) : (
               <TouchableOpacity
                 style={[styles.buyBtn, (isPurchasing || isInsufficient || (isConnected && chain && chain.id !== expected_chainID)) && { backgroundColor: '#2d2d30' }]}
-                onPress={buyTokens}
-                disabled={isPurchasing || isInsufficient || (isConnected && chain && chain.id !== expected_chainID)}
+                onPress={() => {
+                  if (isConnected && !isWalletVerified) {
+                    setShowVerificationModal(true);
+                  } else {
+                    buyTokens();
+                  }
+                }}
+                disabled={isPurchasing || (isConnected && isWalletVerified && isInsufficient) || (isConnected && chain && chain.id !== expected_chainID)}
               >
                 <View style={{
                   flexDirection: 'row',
@@ -627,10 +705,10 @@ export default function IcoScreen() {
                   justifyContent: 'center',
                   width: '100%'
                 }}>
-                  <Text style={[styles.buyBtnText, (isPurchasing || isInsufficient || (isConnected && chain && chain.id !== expected_chainID)) && { color: '#6b7280' }]}>
-                    {isPurchasing ? 'Processing...' : isInsufficient ? 'Insufficient Balance' : (isConnected && chain && chain.id !== expected_chainID) ? 'WRONG NETWORK' : 'BUY ABCD'}
+                  <Text style={[styles.buyBtnText, (isPurchasing || (isConnected && isWalletVerified && isInsufficient) || (isConnected && chain && chain.id !== expected_chainID)) && { color: '#6b7280' }]}>
+                    {isPurchasing ? 'Processing...' : (isConnected && chain && chain.id !== expected_chainID) ? 'WRONG NETWORK' : (!isWalletVerified) ? 'VERIFY WALLET FIRST' : isInsufficient ? 'Insufficient Balance' : 'BUY ABCD'}
                   </Text>
-                  {!isPurchasing && !isInsufficient && !(isConnected && chain && chain.id !== expected_chainID) && (
+                  {!isPurchasing && !(isConnected && chain && chain.id !== expected_chainID) && isWalletVerified && !isInsufficient && (
                     <Image
                       source={require('../../assets/rocket.png')}
                       style={{ width: wp(6.5), height: wp(8), marginTop: -6, marginLeft: space(2.5) }}
@@ -811,6 +889,62 @@ export default function IcoScreen() {
           onClose={() => setShowWalletModal(false)}
           onWalletConnect={handleWalletConnect}
         />
+
+        {/* VERIFICATION MODAL */}
+        <Modal
+          visible={showVerificationModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => isWalletVerified ? setShowVerificationModal(false) : null}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { paddingVertical: space(6) }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Verify Wallet</Text>
+                {isWalletVerified && (
+                  <TouchableOpacity onPress={() => setShowVerificationModal(false)} style={styles.modalCloseBtn}>
+                    <Icon name="close" size={24} color="#a1a1aa" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <Text style={{ color: '#d1d5db', fontSize: font(13), fontFamily: Fonts.regular, marginBottom: space(4), lineHeight: 20 }}>
+                To participate in the ICO, please verify your wallet ownership by signing a message.
+              </Text>
+
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: space(6), backgroundColor: 'rgba(112, 66, 248, 0.1)', padding: space(3), borderRadius: radius(2), borderWidth: 1, borderColor: 'rgba(112, 66, 248, 0.2)' }}>
+                <Icon name="information-circle-outline" size={wp(5)} color="#7042f8" style={{ marginRight: space(2), marginTop: 2 }} />
+                <Text style={{ color: '#9ca3af', fontSize: font(11), fontFamily: Fonts.medium, flex: 1, lineHeight: 16 }}>
+                  Once linked, this wallet will be used for your ICO participation and cannot be changed without contacting the team.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space(6) }}
+                activeOpacity={0.7}
+                onPress={() => setHasConsent(!hasConsent)}
+              >
+                <View style={{ width: wp(5), height: wp(5), borderRadius: 4, borderWidth: 1.5, borderColor: hasConsent ? '#7042f8' : '#6b7280', backgroundColor: hasConsent ? '#7042f8' : 'transparent', justifyContent: 'center', alignItems: 'center', marginRight: space(3) }}>
+                  {hasConsent && <Icon name="checkmark" size={wp(3.5)} color="#fff" />}
+                </View>
+                <Text style={{ color: '#e5e7eb', fontSize: font(12), fontFamily: Fonts.medium, flex: 1 }}>
+                  I understand that this wallet will be permanently linked to my account for this ICO.
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.doneBtn, (!hasConsent || isVerifying) && { backgroundColor: '#3f3f46' }]}
+                onPress={handleVerifyWallet}
+                disabled={!hasConsent || isVerifying}
+              >
+                <Text style={[styles.doneBtnText, (!hasConsent || isVerifying) && { color: '#9ca3af' }]}>
+                  {isVerifying ? 'Verifying...' : 'Sign & Verify'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
       </ScrollView>
       <Toast />
     </SafeAreaView >
