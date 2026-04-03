@@ -128,11 +128,31 @@ export default function IcoScreen() {
   const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
-    // Show validation popup if connected but not verified
+    const checkVerificationStatus = async () => {
+      if (account?.address) {
+        try {
+          // TODO
+          // const response = await fetch(`BACKEND_URL/api/check-wallet/${account.address}`);
+          // const data = await response.json();
+          
+          // if (data.isVerified) {
+          //   setIsWalletVerified(true);
+          //   return;
+          // }
+          
+          // If not verified, show the modal
+          setShowVerificationModal(true);
+        } catch (error) {
+          console.error("Failed to check verification status", error);
+          setShowVerificationModal(true); // Fallback to asking for verification
+        }
+      }
+    };
+
     if (isConnected && !isWalletVerified) {
-      setShowVerificationModal(true);
+      checkVerificationStatus();
     }
-  }, [isConnected, isWalletVerified]);
+  }, [isConnected, isWalletVerified, account]);
 
   useEffect(() => {
     // Reset state on disconnect
@@ -181,7 +201,7 @@ export default function IcoScreen() {
       //     // If the backend returned false (e.g. signature mismatch)
       //     throw new Error(data.error || "Wallet verification failed on server");
       // }
-      
+
       setIsWalletVerified(true);
       setShowVerificationModal(false);
       Toast.show({ type: 'success', text1: 'Verified!', text2: 'Your wallet is verified for the ICO.' });
