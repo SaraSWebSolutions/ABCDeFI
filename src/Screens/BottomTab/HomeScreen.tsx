@@ -44,7 +44,7 @@ export default function HomeScreen({ navigation }: any) {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
   const chain = useActiveWalletChain();
-  console.log(chain, 'chain');
+  // console.log(chain, 'chain');
   const switchChain = useSwitchActiveWalletChain();
   const address = account?.address;
   const isConnected = !!account;
@@ -260,8 +260,8 @@ const handleAnswer = (value: "yes" | "no") => {
 const imageUrl = profileData?.image
   ? `${IMAGE_URL.replace(/\/$/, "")}/${profileData.image.replace(/^\//, "")}`
   : null;
-console.log("IMAGE_URL:", imgError,IMAGE_URL);
-console.log("FINAL URL:", IMAGE_URL + profileData?.image);
+// console.log("IMAGE_URL:", imgError,IMAGE_URL);
+// console.log("FINAL URL:", IMAGE_URL + profileData?.image);
 return (
 <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
   <ScrollView
