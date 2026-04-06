@@ -115,9 +115,11 @@ export default function IcoScreen() {
   const chain = useActiveWalletChain();
   const switchChain = useSwitchActiveWalletChain();
   const { connect } = useConnect();
+  const { disconnect } = useDisconnect();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const address = account?.address;
   const isConnected = !!account;
+
 
 
   useEffect(() => {
@@ -937,7 +939,7 @@ export default function IcoScreen() {
               // onPress={() => isConnected && wallet ? disconnect(wallet) : setShowWalletModal(true)}
               >
                 <Text style={styles.truncatedAddress}>
-                  {isConnected && address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Connect'}
+                  {isConnected && address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Wallet Not Connected'}
                 </Text>
                 <View style={styles.jazziconBox}>
                   {isConnected && address ? (
@@ -1439,11 +1441,12 @@ export default function IcoScreen() {
               {isWrongWallet ? (
                 <>
                   <Text style={{ color: '#ef4444', fontSize: font(15), fontFamily: Fonts.bold, marginBottom: space(2) }}>
-                    Mismatch Detected
+                    {/* Mismatch Detected */}
                   </Text>
                   <Text style={{ color: '#d1d5db', fontSize: font(13), fontFamily: Fonts.regular, marginBottom: space(4), lineHeight: 20 }}>
-                    This profile is already linked to a different wallet address. To participate, please switch your wallet in your browser/provider.
+                    This profile is already linked to a different wallet address. To participate, please switch your address in your mobile wallet or disconnect to try another.
                   </Text>
+
                   
                   <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: space(4), borderRadius: radius(2), borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)', marginBottom: space(6) }}>
                     <Text style={{ color: '#9ca3af', fontSize: font(10), fontFamily: Fonts.medium, marginBottom: 4 }}>LINKED ADDRESS:</Text>
@@ -1480,14 +1483,21 @@ export default function IcoScreen() {
               )}
 
               <TouchableOpacity
-                style={[styles.doneBtn, (isWrongWallet || !hasConsent || isVerifying) && { backgroundColor: '#3f3f46' }]}
-                onPress={isWrongWallet ? undefined : handleVerifyWallet}
-                disabled={isWrongWallet || !hasConsent || isVerifying}
+                style={[styles.doneBtn, (!isWrongWallet && (!hasConsent || isVerifying)) && { backgroundColor: '#3f3f46' }]}
+                onPress={() => {
+                  if (isWrongWallet) {
+                    if (wallet) disconnect(wallet);
+                  } else {
+                    handleVerifyWallet();
+                  }
+                }}
+                disabled={!isWrongWallet && (!hasConsent || isVerifying)}
               >
-                <Text style={[styles.doneBtnText, (isWrongWallet || !hasConsent || isVerifying) && { color: '#9ca3af' }]}>
-                  {isWrongWallet ? 'Switch Wallet to Continue' : isVerifying ? 'Verifying...' : 'Sign & Verify'}
+                <Text style={[styles.doneBtnText, (!isWrongWallet && (!hasConsent || isVerifying)) && { color: '#9ca3af' }]}>
+                  {isWrongWallet ? 'Disconnect Wallet' : isVerifying ? 'Verifying...' : 'Sign & Verify'}
                 </Text>
               </TouchableOpacity>
+
             </View>
           </View>
         </Modal>
