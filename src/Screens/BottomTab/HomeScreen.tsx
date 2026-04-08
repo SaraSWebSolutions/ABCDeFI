@@ -24,6 +24,9 @@ import { RootState } from '../../Store/Store';
 import { useFocusEffect } from "@react-navigation/native";
 import { fetchTimerIco, fetchReward, fetchRewardStatus } from '../../Store/Slices/homeSlice';
 import { downloadWhitepaper } from '../../Store/Slices/authSlice';
+import { ethers } from 'ethers';
+import icoABI from '../../abi/ico.json';
+
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import { IMAGE_URL } from '@env';
 import FastImage from 'react-native-fast-image';
@@ -33,7 +36,8 @@ import { createWallet, WalletId } from 'thirdweb/wallets';
 import { PROJECT_ID } from '@env';
 import { bscTestnet } from 'thirdweb/chains';
 import { checkWalletInstalled, showInstallationAlert, WALLET_METADATA } from '../../Utils/WalletDetection';
-import { expected_chainID } from './IcoScreen';
+import { expected_chainID, ICO_CONTRACT_ADDRESS } from './IcoScreen';
+
 
 export default function HomeScreen({ navigation }: any) {
   const { disconnect } = useDisconnect();
@@ -44,7 +48,7 @@ export default function HomeScreen({ navigation }: any) {
   const account = useActiveAccount();
   const wallet = useActiveWallet();
   const chain = useActiveWalletChain();
-  // console.log(chain, 'chain');
+   console.log(chain, 'chain');
   const switchChain = useSwitchActiveWalletChain();
   const address = account?.address;
   const isConnected = !!account;
@@ -70,49 +74,91 @@ const { rewardStatus,rewardData } = useSelector(
   const activeAccount = useActiveAccount();
   const status = useActiveWalletConnectionStatus();
 
-useEffect(() => {
-        dispatch(fetchProfile());
+  const [icoStats, setIcoStats] = useState({
+    startTime: 0,
+    endTime: 0,
+    totalCap: '0',
+    totalSold: '0',
+    isLoading: true
+  });
 
-  dispatch(fetchTimerIco());
-  dispatch(fetchRewardStatus());
-  
-}, []);
-useEffect(() => {
-  
-  if (!timerIcoData) return;
+  const fetchHomeScreenData = async (showLoading = true) => {
+    if (showLoading) setIcoStats(prev => ({ ...prev, isLoading: true }));
+    try {
+      const provider = new ethers.JsonRpcProvider('https://bsc-testnet.publicnode.com');
+      const icoContract = new ethers.Contract(ICO_CONTRACT_ADDRESS, icoABI, provider);
 
-    const targetDate = new Date(timerIcoData);
 
-    const interval = setInterval(() => {
-      const now = new Date();
-      const difference = targetDate.getTime() - now.getTime();
+      // Fetch summary, current stage, and start time in parallel (exactly like IcoScreen)
+      const [summary, stageData, startTimeBN, endTimeBN] = await Promise.all([
+        icoContract.getIcoSummary(),
+        icoContract.getCurrentStageData(),
+        icoContract.icoStartTime(),
+        icoContract.icoEndTime()
+      ]);
 
-      if (difference <= 0) {
-        clearInterval(interval);
-        setTimeLeft({
-          days: "0",
-          hours: "0",
-          minutes: "0",
-          seconds: "0",
-        });
+      const [totalSoldGlobal, totalCapGlobal] = summary;
+
+      setIcoStats({
+        startTime: Number(startTimeBN),
+        endTime: Number(endTimeBN),
+        totalCap: ethers.formatUnits(totalCapGlobal, 18),
+        totalSold: ethers.formatUnits(totalSoldGlobal, 18),
+        isLoading: false
+      });
+    } catch (error) {
+      console.error("Error fetching HomeScreen contract data:", error);
+      setIcoStats(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+    fetchHomeScreenData(true);
+    dispatch(fetchRewardStatus());
+
+    // Refresh data every 15 seconds
+    const refreshInterval = setInterval(() => fetchHomeScreenData(false), 15000);
+    return () => clearInterval(refreshInterval);
+  }, []);
+
+  // Per-second timer for the countdown clock
+  useEffect(() => {
+    const timerInterval = setInterval(() => {
+      const now = Math.floor(Date.now() / 1000);
+      
+      // LOGIC: If startTime is in the future, target startTime. If not, target endTime.
+      let targetTime = 0;
+      if (icoStats.startTime > 0 && now < icoStats.startTime) {
+        targetTime = icoStats.startTime;
+      } else if (icoStats.endTime > 0) {
+        targetTime = icoStats.endTime;
+      }
+
+      if (!targetTime || targetTime <= now) {
+        setTimeLeft({ days: "00", hours: "00", minutes: "00", seconds: "00" });
         return;
       }
 
-      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((difference / (1000 * 60)) % 60);
-      const seconds = Math.floor((difference / 1000) % 60);
+      const diff = targetTime - now;
+      const d = Math.floor(diff / 86400);
+      const h = Math.floor((diff % 86400) / 3600);
+      const m = Math.floor((diff % 3600) / 60);
+      const s = diff % 60;
 
       setTimeLeft({
-        days: String(days).padStart(2, "0"),
-        hours: String(hours).padStart(2, "0"),
-        minutes: String(minutes).padStart(2, "0"),
-        seconds: String(seconds).padStart(2, "0"),
+        days: String(d).padStart(2, "0"),
+        hours: String(h).padStart(2, "0"),
+        minutes: String(m).padStart(2, "0"),
+        seconds: String(s).padStart(2, "0"),
       });
     }, 1000);
 
-    return () => clearInterval(interval);
-  }, [timerIcoData]);
+    return () => clearInterval(timerInterval);
+  }, [icoStats.startTime, icoStats.endTime]);
+
+
+
 
   useFocusEffect(
     useCallback(() => {
@@ -152,7 +198,7 @@ useEffect(() => {
       await connect(async () => {
         await wallet.connect({
           client: thirdwebClient,
-          chain: bscTestnet,
+          chain: bscTestnet_custom,
           walletConnect: {
             projectId: PROJECT_ID,
             appMetadata: {
@@ -324,9 +370,12 @@ return (
 
               <View style={styles.timerTitleRow}>
                 <View style={styles.line} />
-                <Text style={styles.icoTitle}>ICO Starts In</Text>
+                <Text style={styles.icoTitle}>
+                  {Math.floor(Date.now() / 1000) < icoStats.startTime ? 'ICO Starts In' : 'ICO Ends In'}
+                </Text>
                 <View style={styles.line} />
               </View>
+
 
               <View style={styles.timerRow}>
                 {[
@@ -429,7 +478,9 @@ return (
 
               <View>
                 <Text style={styles.tokenTitle}>Token allocation</Text>
-                <Text style={styles.tokenAmount}>1 Quadrillion</Text>
+                <Text style={styles.tokenAmount}>
+                  {`${(parseFloat(icoStats.totalCap) / 1e12).toFixed(1)} Trillion`}
+                </Text>
               </View>
 
               <TouchableOpacity onPress={() => handleDownloadWhitepaper()} style={styles.downloadIcon}>

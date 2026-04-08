@@ -38,4 +38,4 @@ export const bscTestnet_custom = /*#__PURE__*/ defineChain({
   }
 })
 
-
+export const activeChain = bscTestnet_custom

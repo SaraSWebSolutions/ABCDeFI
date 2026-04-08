@@ -105,8 +105,9 @@ const TOKENS: Token[] = [
   },
 ];
 
-const ICO_CONTRACT_ADDRESS = '0x88245085F16B761a87668B2Cb945DEd6dfB65963';
- export const expected_chainID = 97;
+export const ICO_CONTRACT_ADDRESS = '0x306a5089f9874925Fc66d1FB28b8f00831155397';
+export const expected_chainID = 97;
+
 
 export default function IcoScreen() {
   const { wp, hp, font, radius, space } = useResponsive();
@@ -143,7 +144,11 @@ export default function IcoScreen() {
   const [icoPrice, setIcoPrice] = useState<number>(0);
   const [roundTimeLeft, setRoundTimeLeft] = useState('00D : 00H');
   const [globalTimeLeft, setGlobalTimeLeft] = useState('00D : 00H');
+  const [icoStartsIn, setIcoStartsIn] = useState('00D : 00H');
+  const [gasFee, setGasFee] = useState('0.10');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+
   const [txnHash, setTxnHash] = useState('');
   const [isBalanceLoading, setIsBalanceLoading] = useState(false);
   const [abcdBalance, setAbcdBalance] = useState('0.00');
@@ -177,6 +182,8 @@ export default function IcoScreen() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [boundAddress, setBoundAddress] = useState<string | null>(null);
   const [isWrongWallet, setIsWrongWallet] = useState(false);
+  const [isAlreadyUsed, setIsAlreadyUsed] = useState(false);
+  const [usedErrorMessage, setUsedErrorMessage] = useState("");
   const [isCheckingVerification, setIsCheckingVerification] = useState(true);
 
   useEffect(() => {
@@ -194,7 +201,6 @@ export default function IcoScreen() {
         const data = response.data;
         console.log("API DATA RECEIVED:", data);
 
-        // FIX: Match the backend's naming convention (walletAddress) and check nested profile if it exists
         const rawAddress = data.walletAddress || data.profile?.walletAddress;
 
         if (rawAddress) {
@@ -229,7 +235,6 @@ export default function IcoScreen() {
         }
         
         // If it's a 404 or specific "not found" error, show the bind modal
-        // Otherwise, keep the dashboard blocked until we're sure
         setIsWalletVerified(false);
         setIsWrongWallet(false);
         setShowVerificationModal(true);
@@ -257,8 +262,11 @@ export default function IcoScreen() {
       setHasConsent(false);
       setBoundAddress(null);
       setIsWrongWallet(false);
+      setIsAlreadyUsed(false);
+      setUsedErrorMessage("");
     }
   }, [account]);
+
 
 
   const handleVerifyWallet = async () => {
@@ -297,12 +305,26 @@ export default function IcoScreen() {
 
     } catch (error: any) {
       console.error("DETAILED VERIFICATION ERROR:", error);
-      const displayError = error.message || 'Verification failed';
+      const displayError = error.response?.data?.message || error.message || 'Verification failed';
+      
+      // Check if the API indicated the wallet is already in use
+      if (
+        displayError.toLowerCase().includes('already') || 
+        displayError.toLowerCase().includes('in use') || 
+        displayError.toLowerCase().includes('used') ||
+        error.response?.status === 400 || error.response?.status === 403 || error.response?.status === 409
+      ) {
+        setIsAlreadyUsed(true);
+        setUsedErrorMessage(displayError);
+        return; // Don't show toast, handle in UI modal
+      }
+
       Toast.show({ 
         type: 'error', 
         text1: 'Verification Failed', 
         text2: displayError === 'user rejected' ? 'You must sign the message.' : displayError 
       });
+
 
     } finally {
       setIsVerifying(false);
@@ -438,43 +460,13 @@ export default function IcoScreen() {
 
       // Fetch Round and Global End Times
       try {
-        const currentTime = Math.floor(Date.now() / 1000);
-
-        // Round Time Left
-        // FIX: Use the local sData variable instead of state currentStageData to avoid stale values
-        const roundEndTime = sData?.endTime || 0;
-        if (roundEndTime > 0) {
-          const diff = roundEndTime - currentTime;
-          if (diff > 0) {
-            const days = Math.floor(diff / (24 * 3600));
-            const hours = Math.floor((diff % (24 * 3600)) / 3600);
-            const minutes = Math.floor((diff % 3600) / 60);
-            setRoundTimeLeft(`${days}D : ${hours}H : ${minutes}M`);
-          } else {
-            setRoundTimeLeft('Ended');
-          }
-        } else {
-          setRoundTimeLeft('...');
-        }
-
-
-        // Global Time Left
-        if (globalEndTime > 0) {
-          const diff = globalEndTime - currentTime;
-          if (diff > 0) {
-            const days = Math.floor(diff / (24 * 3600));
-            const hours = Math.floor((diff % (24 * 3600)) / 3600);
-            const minutes = Math.floor((diff % 3600) / 60);
-            setGlobalTimeLeft(`${days}D : ${hours}H : ${minutes}M`);
-          } else {
-            setGlobalTimeLeft('Ended');
-          }
-        } else {
-          setGlobalTimeLeft('...');
-        }
+        // Timers are handled by the 1s useEffect below to avoid dashboard stuttering
       } catch (e) {
         console.error('Error fetching ico timings:', e);
       }
+
+
+
 
       // Fetch balances and prices for each payment token
       await Promise.all(TOKENS.map(async (token) => {
@@ -510,9 +502,26 @@ export default function IcoScreen() {
 
       if (address) setTokenBalances(balances);
       setTokenPrices(prices);
+
+      // Fetch Gas Fee Estimation
+      try {
+        const feeData = await provider.getFeeData();
+        const gasPrice = feeData.gasPrice || BigInt(5000000000); // Fallback 5 Gwei
+        const bnbPrice = prices['BNB'] || 600; // Fallback to a reasonable BNB price if fetch failed
+        
+        // Typical purchase transaction uses ~250,000 gas
+        const estimatedGas = BigInt(250000);
+        const costInBnb = (gasPrice * estimatedGas);
+        const costInUsd = (Number(ethers.formatEther(costInBnb)) * bnbPrice).toFixed(2);
+        
+        setGasFee(costInUsd);
+      } catch (err) {
+        console.error("Error estimating gas fee:", err);
+      }
     } finally {
       setIsBalanceLoading(false);
     }
+
   };
 
   const fetchVestingData = async (showLoading = true) => {
@@ -588,6 +597,60 @@ export default function IcoScreen() {
 
 
 
+  // NEW: Per-second timer for all countdowns
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = Math.floor(Date.now() / 1000);
+
+      // 1. Check if Pre-Launch
+      const isPreLaunch = globalStartTime > 0 && now < globalStartTime;
+
+      if (isPreLaunch) {
+        // Calculate "Starts In" Countdown
+        const diff = globalStartTime - now;
+        const d = Math.floor(diff / 86400);
+        const h = Math.floor((diff % 86400) / 3600);
+        const m = Math.floor((diff % 3600) / 60);
+        const s = diff % 60;
+        setIcoStartsIn(`${String(d).padStart(2, '0')}D:${String(h).padStart(2, '0')}H:${String(m).padStart(2, '0')}M:${String(s).padStart(2, '0')}S`);
+        
+        // Suppress End timers until launch
+        setGlobalTimeLeft("-");
+        setRoundTimeLeft("-");
+      } else {
+        setIcoStartsIn("");
+
+        // 2. Handle Global Countdown (Active Phase)
+        if (globalEndTime > 0 && now < globalEndTime) {
+          const diff = globalEndTime - now;
+          const d = Math.floor(diff / 86400);
+          const h = Math.floor((diff % 86400) / 3600);
+          const m = Math.floor((diff % 3600) / 60);
+          setGlobalTimeLeft(`${String(d).padStart(2, '0')}D:${String(h).padStart(2, '0')}H:${String(m).padStart(2, '0')}M`);
+        } else {
+          // If ICO has started but no end time is reached, we could show Ended or calculate from stage
+          setGlobalTimeLeft(globalEndTime > 0 && now >= globalEndTime ? "Ended" : "-");
+        }
+
+        // 3. Handle Round Countdown (Active Phase)
+        const roundEndTime = currentStageData?.endTime || 0;
+        if (roundEndTime > 0 && now < roundEndTime) {
+          const diff = Number(roundEndTime) - now;
+          const d = Math.floor(diff / 86400);
+          const h = Math.floor((diff % 86400) / 3600);
+          const m = Math.floor((diff % 3600) / 60);
+          setRoundTimeLeft(`${String(d).padStart(2, '0')}D:${String(h).padStart(2, '0')}H:${String(m).padStart(2, '0')}M`);
+        } else {
+          setRoundTimeLeft(roundEndTime > 0 && now >= roundEndTime ? "Ended" : "-");
+        }
+      }
+
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [globalStartTime, globalEndTime, currentStageData]);
+
+
+
   useEffect(() => {
     fetchTokenData(true);
     fetchVestingData(true);
@@ -598,6 +661,7 @@ export default function IcoScreen() {
 
     return () => clearInterval(interval);
   }, [isConnected, address, chain?.id, vestingVaultAddress]);
+
 
   const amountToNumber = parseFloat(purchaseAmount) || 0;
   const currentTokenBalance = parseFloat(tokenBalances[selectedToken.symbol] || '0');
@@ -939,7 +1003,7 @@ export default function IcoScreen() {
               // onPress={() => isConnected && wallet ? disconnect(wallet) : setShowWalletModal(true)}
               >
                 <Text style={styles.truncatedAddress}>
-                  {isConnected && address ? `${address.slice(0, 4)}...${address.slice(-4)}` : 'Wallet Not Connected'}
+                  {isConnected && address ? `${address.slice(0, 5)}...${address.slice(-7)}` : 'Wallet not connected'}
                 </Text>
                 <View style={styles.jazziconBox}>
                   {isConnected && address ? (
@@ -1032,18 +1096,26 @@ export default function IcoScreen() {
 
             {/* RECEIVE SECTION */}
             <View style={styles.swapSectionHeader}>
-              <Text style={styles.swapSectionTitle}>YOUR ALLOCATION</Text>
+              <Text style={styles.swapSectionTitle}></Text>
             </View>
             <View style={styles.swapInputRow}>
               <View style={styles.swapInputCol}>
-                <Text style={[styles.swapInputPrimary, { color: '#7042f8' }]}>
+                <Text 
+                  style={[styles.swapInputPrimary, { color: '#7042f8', paddingRight: space(4) }]}
+                  numberOfLines={1} 
+                  adjustsFontSizeToFit={true}
+
+                  minimumFontScale={0.4}
+                >
                   {purchaseAmount && tokenPrices[selectedToken.symbol] && icoPrice > 0
                     ? ((parseFloat(purchaseAmount) * tokenPrices[selectedToken.symbol]) / icoPrice).toFixed(2)
                     : '0.00'}
                 </Text>
+
                 <Text style={styles.swapInputSecondary}>
-                    {currentStageData ? `Vesting: ${currentStageData.endTime > 0 ? 'Active' : 'Pending'}` : 'GasFee :~ $0.10'}
+                  {`GasFee :~ $${gasFee}`}
                 </Text>
+
               </View>
 
               <View style={{ alignItems: 'flex-end' }}>
@@ -1070,17 +1142,32 @@ export default function IcoScreen() {
               >
                 <Text style={styles.buyBtnText}>CONNECT WALLET</Text>
               </TouchableOpacity>
+            ) : icoStartsIn !== "" ? (
+              <View
+                style={[styles.buyBtn, { backgroundColor: 'rgba(28, 28, 31, 0.8)', borderColor: '#2d2d30', borderWidth: 1, height: hp(6.5) }]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', width: '100%', paddingHorizontal: space(2) }}>
+                  <Icon name="time-outline" size={font(14.5)} color="#6b7280" style={{ marginRight: space(2), marginTop: -3 }} />
+                  <Text style={[styles.buyBtnText, { color: '#9ca3af', fontSize: font(12.5), textAlignVertical: 'center' }]}>
+                    STARTS IN {icoStartsIn}
+                  </Text>
+                </View>
+
+
+              </View>
+
             ) : (
               <TouchableOpacity
-                style={[styles.buyBtn, (isPurchasing || isInsufficient || (isConnected && chain && chain.id !== expected_chainID)) && { backgroundColor: '#2d2d30' }]}
+                style={[styles.buyBtn, (isPurchasing || isInsufficient || globalTimeLeft === 'Ended' || (isConnected && chain && chain.id !== expected_chainID)) && { backgroundColor: '#2d2d30' }]}
                 onPress={() => {
+                  if (globalTimeLeft === 'Ended') return;
                   if (isConnected && !isWalletVerified) {
                     setShowVerificationModal(true);
                   } else {
                     buyTokens();
                   }
                 }}
-                disabled={isPurchasing || (isConnected && isWalletVerified && isInsufficient) || (isConnected && chain && chain.id !== expected_chainID)}
+                disabled={isPurchasing || globalTimeLeft === 'Ended' || (isConnected && isWalletVerified && isInsufficient) || (isConnected && chain && chain.id !== expected_chainID)}
               >
                 <View style={{
                   flexDirection: 'row',
@@ -1088,25 +1175,40 @@ export default function IcoScreen() {
                   justifyContent: 'center',
                   width: '100%'
                 }}>
-                  <Text style={[styles.buyBtnText, (isPurchasing || (isConnected && isWalletVerified && isInsufficient) || (isConnected && chain && chain.id !== expected_chainID)) && { color: '#6b7280' }]}>
-                    {isPurchasing ? 'Processing...' : (isConnected && chain && chain.id !== expected_chainID) ? 'WRONG NETWORK' : (!isWalletVerified) ? 'VERIFY WALLET FIRST' : isInsufficient ? 'Insufficient Balance' : 'BUY ABCD'}
+                  {globalTimeLeft === 'Ended' && (
+                    <Icon name="lock-closed-outline" size={font(16)} color="#6b7280" style={{ marginRight: space(2), marginTop: -3 }} />
+                  )}
+                  <Text style={[styles.buyBtnText, (isPurchasing || globalTimeLeft === 'Ended' || (isConnected && isWalletVerified && isInsufficient) || (isConnected && chain && chain.id !== expected_chainID)) && { color: '#6b7280', textAlignVertical: 'center' }]}>
+                    {globalTimeLeft === 'Ended' ? 'ICO ENDED' : isPurchasing ? 'Processing...' : (isConnected && chain && chain.id !== expected_chainID) ? 'WRONG NETWORK' : (!isWalletVerified) ? 'VERIFY WALLET FIRST' : isInsufficient ? 'Insufficient Balance' : 'BUY ABCD'}
                   </Text>
-                  {!isPurchasing && !(isConnected && chain && chain.id !== expected_chainID) && isWalletVerified && !isInsufficient && (
+
+
+
+
+                  {!isPurchasing && globalTimeLeft !== 'Ended' && !(isConnected && chain && chain.id !== expected_chainID) && isWalletVerified && !isInsufficient && (
                     <Image
                       source={require('../../assets/rocket.png')}
                       style={{ width: wp(6.5), height: wp(8), marginTop: -6, marginLeft: space(2.5) }}
                       resizeMode="contain"
                     />
                   )}
+
                 </View>
               </TouchableOpacity>
             )}
+
           </View>
 
           {/* ROUND PROGRESS */}
           <View style={styles.progressSection}>
             <View style={styles.progressHeader}>
-              <Text style={styles.progressTitle}>ROUND 0{currentStageIndex + 1} PROGRESS</Text>
+              <Text style={styles.progressTitle}>
+                <Text style={{ color: '#d3d1daff' }}>ROUND</Text>
+                <Text style={{ color: '#7042f8', opacity: 0.7 }}> 0{currentStageIndex + 1} </Text> 
+                <Text style={{ color: '#d2cfdbff' }}>PROGRESS</Text>
+              </Text>
+
+
               <Text style={styles.progressPercent}>{roundIcoPercent}%</Text>
             </View>
             <View style={styles.progressBarTrack}>
@@ -1159,7 +1261,8 @@ export default function IcoScreen() {
           {/* SIMPLIFIED STATS GRID */}
           <View style={styles.simpleGrid}>
             <View style={styles.simpleStatCard}>
-              <MaterialCommunityIcons name="timer-outline" size={wp(6)} color="#7042f8" />
+              <MaterialCommunityIcons name="timer-outline" size={wp(6)} color="#7042f8" style={styles.statIconFix} />
+
               <View style={styles.simpleStatTextCol}>
                 <Text style={styles.simpleLabel}>ROUND 0{currentStageIndex + 1}</Text>
                 <Text style={styles.simpleValue}>
@@ -1171,40 +1274,50 @@ export default function IcoScreen() {
               </View>
             </View>
 
+
             <View style={styles.simpleStatCard}>
-              <MaterialCommunityIcons name="currency-usd" size={wp(6)} color="#7042f8" />
+              <MaterialCommunityIcons name="currency-usd" size={wp(6)} color="#7042f8" style={styles.statIconFix} />
+
               <View style={styles.simpleStatTextCol}>
                 <Text style={styles.simpleLabel}>TOTAL RAISED</Text>
                 <Text style={styles.simpleValue}>{parseFloat(globalTotalRaised).toLocaleString('en-US')} USD</Text>
               </View>
             </View>
 
+
             <View style={styles.simpleStatCard}>
-              <Feather name="clock" size={wp(5)} color="#7042f8" />
+              <Feather name="clock" size={wp(5)} color="#7042f8" style={styles.statIconFix} />
+
               <View style={styles.simpleStatTextCol}>
                 <Text style={styles.simpleLabel}>ROUND ENDS</Text>
                 <Text style={styles.simpleValue}>{roundTimeLeft}</Text>
               </View>
             </View>
 
+
             <View style={styles.simpleStatCard}>
-              <MaterialCommunityIcons name="earth" size={wp(6)} color="#7042f8" />
+              <MaterialCommunityIcons name="earth" size={wp(6)} color="#7042f8" style={styles.statIconFix} />
+
               <View style={styles.simpleStatTextCol}>
                 <Text style={styles.simpleLabel}>ICO END</Text>
                 <Text style={styles.simpleValue}>{globalTimeLeft}</Text>
               </View>
             </View>
 
+
             <View style={styles.simpleStatCard}>
-              <MaterialCommunityIcons name="chart-donut" size={wp(6)} color="#7042f8" />
+              <MaterialCommunityIcons name="chart-donut" size={wp(6)} color="#7042f8" style={styles.statIconFix} />
+
               <View style={styles.simpleStatTextCol}>
                 <Text style={styles.simpleLabel}>GLOBAL PROGRESS</Text>
                 <Text style={styles.simpleValue}>{globalIcoPercent}%</Text>
               </View>
             </View>
 
+
             <View style={styles.simpleStatCard}>
-              <MaterialCommunityIcons name="account-group-outline" size={wp(6)} color="#7042f8" />
+              <MaterialCommunityIcons name="account-group-outline" size={wp(6)} color="#7042f8" style={styles.statIconFix} />
+
               <View style={styles.simpleStatTextCol}>
                 <Text style={styles.simpleLabel}>PARTICIPANTS</Text>
                 <Text style={styles.simpleValue}>
@@ -1212,6 +1325,7 @@ export default function IcoScreen() {
                 </Text>
               </View>
             </View>
+
           </View>
 
         </View>
@@ -1438,20 +1552,24 @@ export default function IcoScreen() {
                 )}
               </View>
 
-              {isWrongWallet ? (
+              {isWrongWallet || isAlreadyUsed ? (
                 <>
                   <Text style={{ color: '#ef4444', fontSize: font(15), fontFamily: Fonts.bold, marginBottom: space(2) }}>
-                    {/* Mismatch Detected */}
+                    {isAlreadyUsed ? 'Wallet Already In Use' : ''}
                   </Text>
                   <Text style={{ color: '#d1d5db', fontSize: font(13), fontFamily: Fonts.regular, marginBottom: space(4), lineHeight: 20 }}>
-                    This profile is already linked to a different wallet address. To participate, please switch your address in your mobile wallet or disconnect to try another.
+                    {isAlreadyUsed 
+                      ? (usedErrorMessage || "This wallet is already bound to another participant's profile. Please disconnect and use a fresh wallet to join the ICO.")
+                      : "This profile is already linked to a different wallet address. To participate, please switch your address in your mobile wallet or disconnect to try another."}
                   </Text>
 
                   
-                  <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: space(4), borderRadius: radius(2), borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)', marginBottom: space(6) }}>
-                    <Text style={{ color: '#9ca3af', fontSize: font(10), fontFamily: Fonts.medium, marginBottom: 4 }}>LINKED ADDRESS:</Text>
-                    <Text style={{ color: '#e5e7eb', fontSize: font(12), fontFamily: Fonts.medium, letterSpacing: 0.5 }}>{boundAddress}</Text>
-                  </View>
+                  {isWrongWallet && (
+                    <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: space(4), borderRadius: radius(2), borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)', marginBottom: space(6) }}>
+                      <Text style={{ color: '#9ca3af', fontSize: font(10), fontFamily: Fonts.medium, marginBottom: 4 }}>LINKED ADDRESS:</Text>
+                      <Text style={{ color: '#e5e7eb', fontSize: font(12), fontFamily: Fonts.medium, letterSpacing: 0.5 }}>{boundAddress}</Text>
+                    </View>
+                  )}
 
                 </>
               ) : (
@@ -1483,18 +1601,20 @@ export default function IcoScreen() {
               )}
 
               <TouchableOpacity
-                style={[styles.doneBtn, (!isWrongWallet && (!hasConsent || isVerifying)) && { backgroundColor: '#3f3f46' }]}
+                style={[styles.doneBtn, (!(isWrongWallet || isAlreadyUsed) && (!hasConsent || isVerifying)) && { backgroundColor: '#3f3f46' }]}
                 onPress={() => {
-                  if (isWrongWallet) {
+                  if (isWrongWallet || isAlreadyUsed) {
                     if (wallet) disconnect(wallet);
+                    setIsAlreadyUsed(false);
+                    setHasConsent(false);
                   } else {
                     handleVerifyWallet();
                   }
                 }}
-                disabled={!isWrongWallet && (!hasConsent || isVerifying)}
+                disabled={!(isWrongWallet || isAlreadyUsed) && (!hasConsent || isVerifying)}
               >
-                <Text style={[styles.doneBtnText, (!isWrongWallet && (!hasConsent || isVerifying)) && { color: '#9ca3af' }]}>
-                  {isWrongWallet ? 'Disconnect Wallet' : isVerifying ? 'Verifying...' : 'Sign & Verify'}
+                <Text style={[styles.doneBtnText, (!(isWrongWallet || isAlreadyUsed) && (!hasConsent || isVerifying)) && { color: '#9ca3af' }]}>
+                  {(isWrongWallet || isAlreadyUsed) ? 'Disconnect Wallet' : isVerifying ? 'Verifying...' : 'Sign & Verify'}
                 </Text>
               </TouchableOpacity>
 
@@ -1578,7 +1698,7 @@ const createStyles = (
     },
     truncatedAddress: {
       color: '#d1d5db',
-      fontSize: font(11),
+      fontSize: font(13),
       fontFamily: Fonts.medium,
       marginRight: space(2),
     },
@@ -1857,10 +1977,16 @@ const createStyles = (
       padding: space(3.5),
       marginBottom: space(3),
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start', // Align to top
       borderWidth: 1,
       borderColor: '#202124',
     },
+    statIconFix: {
+      marginTop: space(4.2), // Drops the icon center to match the big white value text center
+    },
+
+
+
     simpleStatTextCol: {
       marginLeft: space(3),
       flex: 1,
