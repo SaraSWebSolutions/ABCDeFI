@@ -268,6 +268,24 @@ export const forgotPasswordEmail = createAsyncThunk(
     }
   }
 );
+export const sendFcmToken = createAsyncThunk(
+  "auth/sendFcmToken",
+  async (data: { userId: string; fcmToken: string }, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(showLoader());
+
+      const response = await AuthService.getFcm(data);
+
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || "FCM token send failed"
+      );
+    } finally {
+      dispatch(hideLoader());
+    }
+  }
+);
 //  INITIAL STATE
 const initialState = {
   user: null,
@@ -285,7 +303,9 @@ const initialState = {
   whitepaperSuccess: false,  
   changePasswordSuccess: false,  
   forgotEmailData: null as any,
-forgotEmailSuccess: false,   
+forgotEmailSuccess: false,  
+fcmSuccess: false,
+fcmData: null as any, 
 };
 
 
@@ -471,6 +491,23 @@ console.log(action.payload,"action.payloadaction.payload");
   state.loading = false;
   state.error = action.payload;
   state.forgotEmailSuccess = false;
+})
+
+// ✅ SEND FCM TOKEN
+.addCase(sendFcmToken.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+  state.fcmSuccess = false;
+})
+.addCase(sendFcmToken.fulfilled, (state, action) => {
+  state.loading = false;
+  state.fcmSuccess = true;
+  state.fcmData = action.payload;
+})
+.addCase(sendFcmToken.rejected, (state, action: any) => {
+  state.loading = false;
+  state.error = action.payload;
+  state.fcmSuccess = false;
 })
 }
 });

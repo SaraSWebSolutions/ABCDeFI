@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "71589245463",
+    "project_id": "abcdefi-91155",
+    "storage_bucket": "abcdefi-91155.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:71589245463:android:cb8e835bb12ba9f8f8a252",
+        "android_client_info": {
+          "package_name": "com.abcdefi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3theA3lsDP16I8YmAwDwcGwDhWjbxM_c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

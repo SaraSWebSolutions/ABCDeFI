@@ -38,7 +38,8 @@ import Google from '../../../assets/Icons/google.svg';
 import Fb from '../../../assets/Icons/fb.svg';
 import Apple from '../../../assets/Icons/apple.svg';
 import Logo from '../../../assets/Images/login_logo.svg';
-
+import messaging from '@react-native-firebase/messaging';
+import { sendFcmToken } from "../../Store/Slices/authSlice";
 export const LoginScreen = ({ navigation }: any) => {
 
   const { font, hp } = useResponsive();
@@ -72,8 +73,9 @@ const loadRememberedUser = async () => {
     // console.log("Load Error:", error);
   }
 };
- const onLogin = async () => {
 
+
+const onLogin = async () => {
   const newErrors = {
     email: validateEmailOrPhone(email),
     password: validatePassword(password),
@@ -86,16 +88,38 @@ const loadRememberedUser = async () => {
   );
 
   if (hasError) return;
- const payload = email.includes("@")
-      ? { email: email.toLowerCase(), password }
-      : { mobileNumber: email, password };
+
+  const payload = email.includes("@")
+    ? { email: email.toLowerCase(), password }
+    : { mobileNumber: email, password };
+
   try {
-    const res = await dispatch(
-      loginUser(payload)
-    ).unwrap();
+    // ✅ LOGIN
+    const res = await dispatch(loginUser(payload)).unwrap();
 
-    // console.log("Login Success:", res);
+    const userId = res?.userId;
+    const token = res?.token;
 
+    // ✅ SAVE USER DATA
+    await AsyncStorage.setItem("userId", userId);
+    await AsyncStorage.setItem("authToken", token);
+
+    // ✅ GET FCM TOKEN
+    const fcmToken = await messaging().getToken();
+
+    // console.log("FCM TOKEN:", fcmToken);
+
+    // ✅ SEND FCM TOKEN API
+    if (userId && fcmToken) {
+      await dispatch(
+        sendFcmToken({
+          userId,
+          fcmToken: fcmToken,
+        })
+      ).unwrap();
+    }
+
+    // ✅ REMEMBER USER
     if (remember) {
       await AsyncStorage.setItem(
         "rememberUser",
@@ -103,16 +127,18 @@ const loadRememberedUser = async () => {
       );
     } else {
       await AsyncStorage.removeItem("rememberUser");
-      setEmail('')
-    setPassword('')
+      setEmail("");
+      setPassword("");
     }
-    navigation.navigate("Main");
+
+    // ✅ NAVIGATE
+    navigation.replace("Main"); // better than navigate
 
   } catch (err: any) {
-
-    // console.log("Login Error:", err);
-
-    Alert.alert("Login Failed", err.data?.message || "Something went wrong");
+    Alert.alert(
+      "Login Failed",
+      err?.data?.message || "Something went wrong"
+    );
   }
 };
 const requestStoragePermission = async () => {

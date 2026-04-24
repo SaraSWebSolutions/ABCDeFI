@@ -124,6 +124,9 @@ about:async(data: void)=>{
     return response.data;
   },
 
-
+getFcm:async(data:any)=>{
+  const response =await api.post('user/get-fcm',data)
+  return response.data
+}
 
 };

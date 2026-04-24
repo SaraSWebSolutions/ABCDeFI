@@ -1,4 +1,4 @@
-package com.walletconnect
+package com.abcdefi
 
 import android.app.Application
 import com.facebook.react.PackageList
