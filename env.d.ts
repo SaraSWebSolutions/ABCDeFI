@@ -4,4 +4,6 @@ declare module '@env' {
   export const BASE_URL: string;
   export const API_TIMEOUT: number;
   export const IMAGE_URL:string;
+  export const GOOGLE_CLIENT_ID:string;
+  export const GOOGLE_API_KEY:string;
 }

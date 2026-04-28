@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">ABCDefi</string>
+    <string name="facebook_app_id">2738835879784383</string>
+<string name="facebook_client_token">90a048fde553f5d863f399a9aab33e1a</string>
 </resources>

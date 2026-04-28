@@ -40,6 +40,14 @@ import Apple from '../../../assets/Icons/apple.svg';
 import Logo from '../../../assets/Images/login_logo.svg';
 import messaging from '@react-native-firebase/messaging';
 import { sendFcmToken } from "../../Store/Slices/authSlice";
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { GOOGLE_CLIENT_ID,GOOGLE_API_KEY } from "@env";
+import {
+  LoginManager,
+  AccessToken,
+  GraphRequest,
+  GraphRequestManager,
+} from 'react-native-fbsdk-next';
 export const LoginScreen = ({ navigation }: any) => {
 
   const { font, hp } = useResponsive();
@@ -57,7 +65,90 @@ const [errors, setErrors] = useState({
 useEffect(() => {
   loadRememberedUser();
 }, []);
+useEffect(() => {
+  GoogleSignin.configure({
+    webClientId: '71589245463-q2olq73r64ithkk62rh9mk2290jvf6rk.apps.googleusercontent.com', // from Firebase
+    offlineAccess: true,
+  });
+}, []);
+const handleGoogleLogin = async () => {
+  try {
+    await GoogleSignin.hasPlayServices();
 
+    const userInfo = await GoogleSignin.signIn();
+
+    console.log('Google User:', userInfo);
+
+    const idToken = userInfo.idToken;
+
+    // 🔥 Send this token to your backend
+    // const res = await fetch('YOUR_API/api/auth/google', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ token: idToken }),
+    // });
+
+   // const data = await res.json();
+
+    // if (data.status) {
+    //   await AsyncStorage.setItem("authToken", data.token);
+    //   navigation.replace("Main");
+    // } else {
+    //   Alert.alert("Login Failed", data.message);
+    // }
+
+  } catch (error) {
+    console.log(error);
+    Alert.alert("Google Login Error", error.message);
+  }
+};
+const facebookLogin = async () => {
+  try {
+    const result = await LoginManager.logInWithPermissions([
+      'public_profile',
+      'email',
+    ]);
+
+    if (result.isCancelled) {
+      console.log('User cancelled login');
+      return;
+    }
+
+    const data = await AccessToken.getCurrentAccessToken();
+console.log("facebookdata",data);
+
+    if (!data) {
+      console.log('Error getting access token');
+      return;
+    }
+
+    const infoRequest = new GraphRequest(
+      '/me',
+      {
+        accessToken: data.accessToken,
+        parameters: {
+          fields: {
+            string: 'id,name,email,picture.type(large)',
+          },
+        },
+      },
+      (error, result) => {
+        if (error) {
+          console.log('Error fetching data:', error);
+        } else {
+          console.log('User Info:', result);
+        }
+      }
+    );
+
+    new GraphRequestManager().addRequest(infoRequest).start();
+
+  } catch (error) {
+    console.log('Login error:', error);
+  }
+};
 const loadRememberedUser = async () => {
   try {
     const savedUser = await AsyncStorage.getItem("rememberUser");
@@ -339,7 +430,7 @@ const fileUrl = encodeURI(IMAGE_URL + fileName);
       {/* Social Login */}
 
      <View style={styles.socialRow}>
-  <TouchableOpacity style={styles.socialBtn}>
+  <TouchableOpacity onPress={handleGoogleLogin} style={styles.socialBtn}>
     <Google width={50} height={50}/>
     {/* <Image
       source={require("../../../assets/Icons/google.png")}
@@ -347,7 +438,7 @@ const fileUrl = encodeURI(IMAGE_URL + fileName);
     /> */}
   </TouchableOpacity>
 
-  <TouchableOpacity style={styles.socialBtn}>
+  <TouchableOpacity onPress={()=>facebookLogin()} style={styles.socialBtn}>
     <Fb width={50} height={50}/>
     {/* <Image
       source={require("../../../assets/Icons/fb.png")}

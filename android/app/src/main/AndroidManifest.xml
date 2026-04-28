@@ -129,6 +129,15 @@
       android:usesCleartextTraffic="true" 
       android:requestLegacyExternalStorage="true"
       android:supportsRtl="true">
+       <!-- ✅ ADD HERE -->
+    <meta-data
+        android:name="com.facebook.sdk.ApplicationId"
+        android:value="@string/facebook_app_id"/>
+
+    <!-- (Recommended) -->
+    <meta-data
+        android:name="com.facebook.sdk.ClientToken"
+        android:value="@string/facebook_client_token"/>
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
