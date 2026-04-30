@@ -1,4 +1,4 @@
-package com.walletconnect
+package  com.abcdefi
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
