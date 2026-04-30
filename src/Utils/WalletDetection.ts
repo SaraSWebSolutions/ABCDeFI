@@ -7,6 +7,7 @@ export const WALLET_METADATA: Record<
     scheme: string;
     packageId: string;
     playStoreUrl: string;
+    appStoreUrl: string;
   }
 > = {
   'io.metamask': {
@@ -14,6 +15,7 @@ export const WALLET_METADATA: Record<
     scheme: 'metamask://',
     packageId: 'io.metamask',
     playStoreUrl: 'https://play.google.com/store/apps/details?id=io.metamask',
+    appStoreUrl: 'https://apps.apple.com/app/metamask/id1438144202',
   },
   'com.trustwallet.app': {
     name: 'Trust Wallet',
@@ -21,12 +23,16 @@ export const WALLET_METADATA: Record<
     packageId: 'com.wallet.crypto.trustapp',
     playStoreUrl:
       'https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp',
+    appStoreUrl:
+      'https://apps.apple.com/app/trust-crypto-bitcoin-wallet/id1288339409',
   },
   'me.rainbow': {
     name: 'Rainbow',
     scheme: 'rainbow://',
     packageId: 'me.rainbow',
     playStoreUrl: 'https://play.google.com/store/apps/details?id=me.rainbow',
+    appStoreUrl:
+      'https://apps.apple.com/app/rainbow-ethereum-wallet/id1457119021',
   },
   'com.binance.wallet': {
     name: 'Binance Wallet',
@@ -34,12 +40,16 @@ export const WALLET_METADATA: Record<
     packageId: 'com.binance.dev',
     playStoreUrl:
       'https://play.google.com/store/apps/details?id=com.binance.dev',
+    appStoreUrl:
+      'https://apps.apple.com/app/binance-bitcoin-trading-wallet/id1436149926',
   },
   'app.phantom': {
     name: 'Phantom',
     scheme: 'phantom://',
     packageId: 'app.phantom',
     playStoreUrl: 'https://play.google.com/store/apps/details?id=app.phantom',
+    appStoreUrl:
+      'https://apps.apple.com/app/phantantom-solana-wallet/id1598432997',
   },
 };
 
@@ -80,14 +90,18 @@ export const showInstallationAlert = (walletId: string) => {
     return;
   }
 
+  const isIOS = Platform.OS === 'ios';
+  const storeUrl = isIOS ? metadata.appStoreUrl : metadata.playStoreUrl;
+  const storeName = isIOS ? 'App Store' : 'Play Store';
+
   Alert.alert(
     `${metadata.name} Not Found`,
-    `${metadata.name} is not installed. Install it from Play Store?`,
+    `${metadata.name} is not installed. Install it from ${storeName}?`,
     [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Install',
-        onPress: () => Linking.openURL(metadata.playStoreUrl),
+        onPress: () => Linking.openURL(storeUrl),
       },
     ],
   );
