@@ -9,7 +9,7 @@ TouchableOpacity,
 ScrollView,
 Alert
 } from "react-native";
-
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import LinearGradient from "react-native-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "react-native-vector-icons/Ionicons";
@@ -23,8 +23,9 @@ import { logoutUser } from "../Store/Slices/authSlice";
 import { Colors } from "../Utils/Colors";
 import { IMAGE_URL } from "@env";
 import FastImage from "react-native-fast-image";
+import Icon from "react-native-vector-icons/Ionicons";
 export default function SettingsScreen({navigation}:any) {
-
+const insets = useSafeAreaInsets();
 const { wp, hp, font, radius, space } = useResponsive();
  const dispatch = useDispatch<any>();
 
@@ -88,18 +89,51 @@ const imageUrl = profileData?.image
   : null;
 return (
 
-<SafeAreaView style={{flex:1,backgroundColor:"#fff"}}>
+  <View style={{ flex: 1, backgroundColor: '#3B0D97' }}>
+
+    {/* Status Bar Area */}
+    <SafeAreaView
+      edges={['top']}
+      style={{ backgroundColor: '#3B0D97' }}
+    />
+
+    {/* Main Screen */}
+    <SafeAreaView
+      edges={['left', 'right', 'bottom']}
+      style={{ flex: 1, backgroundColor: '#fff' }}
+    >
+
 <LinearGradient
-         colors={["#7B3EF0", "#3F0D97"]}
-         style={styles.header}
-       >
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={26} color={'#FFF'}/>
-          </TouchableOpacity>
-          <Text style={[styles.title, { fontSize: font(20),textAlign:'center' }]}>
-            Settings
-          </Text>
-        </LinearGradient>
+  colors={['#3B0D97', '#3B0D97', '#3B0D97']}
+  start={{ x: 0, y: 0 }}
+  end={{ x: 1, y: 1 }}
+  style={[
+    styles.settingsHeader,
+    
+  ]}
+>
+
+  <View style={styles.headerContent}>
+
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => navigation.goBack()}
+      style={styles.backButton}
+    >
+      <Icon
+        name="chevron-back"
+        size={24}
+        color="#FFF"
+      />
+    </TouchableOpacity>
+
+    <Text style={styles.settingsTitle}>
+      Settings
+    </Text>
+
+  </View>
+
+</LinearGradient>
 <ScrollView showsVerticalScrollIndicator={false}   contentContainerStyle={{ flexGrow: 1 }}>
 
 <View style={styles.container}>
@@ -187,6 +221,7 @@ style={styles.signOut}
 </ScrollView>
 
 </SafeAreaView>
+</View>
 );
 }
 
@@ -287,7 +322,48 @@ container:{
 padding:space(5)
 
 },
+settingsHeader: {
+  //paddingTop: 14,
+  paddingBottom: 26,
 
+  // borderBottomLeftRadius: 28,
+  // borderBottomRightRadius: 28,
+
+  // shadowColor: '#6C3BFF',
+  // shadowOpacity: 0.3,
+  // shadowRadius: 20,
+  // shadowOffset: {
+  //   width: 0,
+  //   height: 10,
+  // },
+},
+
+headerContent: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 20,
+  marginTop: 10,
+  paddingBottom: 22, 
+},
+
+backButton: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: 'rgba(255,255,255,0.14)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.12)',
+},
+
+settingsTitle: {
+  color: '#FFF',
+  fontSize: 34,
+  fontWeight: '700',
+  fontFamily: Fonts.bold,
+  marginLeft: 18,
+},
  header: {
         flexDirection: "row",
         alignItems: "center",

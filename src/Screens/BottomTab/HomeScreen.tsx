@@ -309,10 +309,27 @@ const imageUrl = profileData?.image
 // console.log("IMAGE_URL:", imgError,IMAGE_URL);
 // console.log("FINAL URL:", IMAGE_URL + profileData?.image);
 return (
-<SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+ <View style={{ flex: 1, backgroundColor: '#1A0048' }}>
+
+    {/* Status Bar Area */}
+    <SafeAreaView
+      edges={['top']}
+      style={{ backgroundColor: '#1A0048' }}
+    />
+
+    {/* Main Screen */}
+    <SafeAreaView
+      edges={['left', 'right', 'bottom']}
+      style={{ flex: 1, backgroundColor: '#fff' }}
+    >
   <ScrollView
-    contentContainerStyle={{ paddingBottom: 80 }}
-    showsVerticalScrollIndicator={false}
+  bounces={false}
+    contentInsetAdjustmentBehavior="never"
+  automaticallyAdjustContentInsets={false}
+
+contentContainerStyle={{
+    paddingBottom: Platform.OS === "ios" ? 120 : 100,
+  }}    showsVerticalScrollIndicator={false}
   >
 
         <View style={styles.container}>
@@ -330,7 +347,7 @@ return (
 
   <TouchableOpacity
     onPress={() => navigation.navigate("SettingsScreen")}
-    style={{ flexDirection: "row", alignItems: "center" }}
+    style={{ flexDirection: "row", alignItems: "center" ,marginHorizontal:10}}
   >
     <FastImage
 
@@ -553,11 +570,11 @@ style={styles.joinGradient}
                   style={styles.rewardBar}
                 >
 
-                  <Text style={styles.rewardText}>Reward Points</Text>
+                <Text style={styles.rewardText}>Reward Points</Text>
 
               <View style={styles.rewardRight}>
                 <Text style={styles.coin}>🪙</Text>
-                <Text style={styles.points}>{rewardData?.points}</Text>
+                <Text style={styles.points}>800{rewardData?.points}</Text>
               </View>
 
                 </LinearGradient>
@@ -611,393 +628,545 @@ style={styles.joinGradient}
       />
 
     </SafeAreaView>
+    </View>
   );
 }
 
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: "#F7F7F7",
+  },
+
+  scrollContent: {
+    paddingBottom: 140,
+  },
 
   container: {
-    flex: 1
-  },
-  tokenHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10
+    flex: 1,
+    backgroundColor: "#F7F7F7",
   },
 
+  /* TOP SECTION */
+
   topSection: {
-    padding: 20,
-    paddingBottom: 90,
-    // borderBottomLeftRadius:30,
-    // borderBottomRightRadius:30
+    paddingTop: 0,
+//   paddingBottom: Platform.OS === "ios" ? 140 : 90,
+//   minHeight: 520, // increase gradient height
+// height:130,
+    // borderBottomLeftRadius: 38,
+    // borderBottomRightRadius: 38,
+ height: Platform.OS === "ios" ? 460 : 520,
+
+    overflow: "hidden",
   },
+
+  topInner: {
+    paddingHorizontal: 20,
+  },
+
+  /* HEADER */
 
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+
+    paddingTop: Platform.OS === "ios" ? 10 : 0,
   },
 
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 52 / 2
+    width: 54,
+    height: 54,
+    borderRadius: 27,
   },
 
   greet: {
-    color: "#ccc",
+    color: "#D9D9D9",
     fontSize: 14,
-    fontFamily: Fonts.regular
+    fontFamily: Fonts.regular,
   },
 
   name: {
-    color: "#fff",
-    fontSize: 20,
+    color: "#FFF",
+    fontSize: 28,
     fontFamily: Fonts.bold,
-    fontWeight: "700"
+    marginTop: 2,
   },
 
   bell: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(255,255,255,0.15)",
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
 
-
-  /* TIMER BOX */
+  /* TIMER */
 
   timerBox: {
-    marginTop: 25,
+    marginTop: 18,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.4)",
-    borderRadius: 22,
-    padding: 20
+    borderColor: "rgba(255,255,255,0.20)",
+    borderRadius: 24,
+
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+marginHorizontal:10,
+    backgroundColor: "rgba(255,255,255,0.03)",
   },
 
   timerTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 20
+    marginBottom: 25,
   },
 
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "rgba(255,255,255,0.4)"
+    backgroundColor: "rgba(255,255,255,0.20)",
   },
 
   icoTitle: {
-    color: "#fff",
-    marginHorizontal: 10,
-    fontSize: 16,
-    fontFamily: Fonts.medium,
-    fontWeight: "600"
+    color: "#FFF",
+    marginHorizontal: 14,
+    fontSize: 20,
+    fontFamily: Fonts.bold,
   },
 
   timerRow: {
     flexDirection: "row",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
 
   timerItem: {
-    alignItems: "center"
+    alignItems: "center",
+    flex: 1,
   },
 
   timerCircle: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+
+    backgroundColor: "rgba(255,255,255,0.16)",
+
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
 
   timerNumber: {
-    color: "#fff",
-    fontSize: 22,
+    color: "#FFF",
+    fontSize: 30,
     fontFamily: Fonts.bold,
-    fontWeight: "700"
   },
 
   timerLabel: {
-    color: "#eee",
-    marginTop: 6,
+    color: "#EEE",
+    marginTop: 10,
+    fontSize: 15,
     fontFamily: Fonts.medium,
   },
 
+  /* CONNECT WALLET */
 
-  walletBtn: {
-    backgroundColor: "rgba(255,255,255,0.25)",
-    marginTop: 25,
-    padding: 14,
-    borderRadius: 15,
-    alignItems: "center"
+  connectWalletButton: {
+    //marginTop: 8,
+    borderRadius: 20,
+    overflow: "hidden",
   },
 
-  walletText: {
-    color: "#fff",
-    fontSize: 17,
+  connectButtonGradient: {
+    height: 68,
+
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+marginHorizontal:20,
+    borderRadius: 20,
+  },
+
+  walletIcon: {
+    marginRight: 10,
+  },
+
+  connectButtonText: {
+    color: "#FFF",
+    fontSize: 18,
     fontFamily: Fonts.semiBold,
-  },
-
-  walletAddress: {
-    color: "#fff",
-    fontSize: 14,
-    fontFamily: Fonts.regular,
-    marginTop: 10,
-    textAlign: "center",
-    opacity: 0.8
   },
 
   joinText: {
     textAlign: "center",
-    color: "#fff",
-    marginTop: 20,
-    fontFamily: Fonts.regular,
+    color: "#FFF",
+
+    marginTop: 8,
+    marginBottom: 10,
+
+    fontSize: 15,
+    fontFamily: Fonts.medium,
+
+    opacity: 0.9,
   },
 
+  /* JOIN ICO BUTTON */
 
+  joinWrapper: {
+    alignItems: "center",
 
+    marginTop: -55,
+    //marginBottom: 20,
 
-  noBtn: {
-    backgroundColor: "#E5E5E5",
-    paddingHorizontal: 35,
-    paddingVertical: 10,
-    borderRadius: 20
+    zIndex: 999,
   },
 
-  yesBtn: {
-    backgroundColor: "#C084FC",
-    paddingHorizontal: 35,
-    paddingVertical: 10,
-    borderRadius: 20
-  },
+  joinGradient: {
+    width: 300,
+    height: 62,
 
-  rewardCard: {
-    margin: 20,
-    backgroundColor: "#fff",
-    borderRadius: 25,
-    top: -42,
-    paddingBottom: 20,
-    overflow: "hidden",
-    elevation: 6,
-    alignSelf: 'center',
-    width: "85%",
-  },
-
-  trophy: {
-    width: "90%",
-    alignSelf: 'center',
-    height: 260,
-    marginTop: 20,
-    borderRadius: 12,
-  },
-
-  rewardBar: {
-    position: "absolute",
-    //top:-5,
-    alignSelf: "center",
-    width: "95%",
     borderRadius: 40,
-    paddingVertical: 13,
-    paddingHorizontal: 20,
+
+    justifyContent: "center",
+    alignItems: "center",
+
+    shadowColor: "#6A35FF",
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+
+    elevation: 8,
+  },
+
+  joinBtnText: {
+    color: "#FFF",
+    fontSize: 18,
+    fontFamily: Fonts.bold,
+  },
+
+  /* TOKEN CARD */
+
+  tokenCard: {
+    marginHorizontal: 20,
+    //marginTop: 8,
+ marginTop: -20,
+    backgroundColor: "#FFF",
+
+    borderBottomLeftRadius: 15, borderBottomRightRadius: 15,
+
+    padding: 22,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+
+    elevation: 5,
+  },
+
+  limit: {
+    color: "#FF3B30",
+
+    textAlign: "center",
+
+    fontSize: 14,
+    fontFamily: Fonts.medium,
+
+    marginBottom: 18,
+  },
+
+  tokenHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 6
   },
 
-  rewardText: {
-    color: "#fff",
+  tokenTitle: {
+    fontSize: 18,
+    color: "#000",
+    fontFamily: Fonts.bold,
+  },
+
+  tokenAmount: {
     fontSize: 16,
-    fontFamily: Fonts.semiBold,
-    fontWeight: "600"
+    color: "#8E8E93",
+
+    marginTop: 6,
+
+    fontFamily: Fonts.medium,
+  },
+
+  downloadIcon: {
+    width: 44,
+    height: 44,
+
+    borderRadius: 22,
+
+    backgroundColor: "#F3F3F3",
+
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  whitePaper: {
+    marginTop: 24,
+
+    backgroundColor: "#6A35FF",
+
+    borderRadius: 18,
+
+    paddingVertical: 16,
+
+    alignItems: "center",
+  },
+
+  /* TROPHY */
+
+  // trophy: {
+  //   width: "90%",
+  //   height: 240,
+
+  //   alignSelf: "center",
+
+  //   marginTop: 28,
+
+  //   borderRadius: 22,
+  // },
+
+  /* REWARD CARD */
+
+  // rewardCard: {
+  //   width: "88%",
+
+  //   alignSelf: "center",
+
+  //   backgroundColor: "#FFF",
+
+  //   borderRadius: 28,
+
+  //   marginTop: -40,
+
+  //   paddingTop: 72,
+  //   paddingBottom: 28,
+
+  //   shadowColor: "#000",
+  //   shadowOpacity: 0.08,
+  //   shadowRadius: 10,
+
+  //   shadowOffset: {
+  //     width: 0,
+  //     height: 4,
+  //   },
+
+  //   elevation: 5,
+  // },
+
+  // rewardBar: {
+  //   position: "absolute",
+
+  //   top: -22,
+  //   left: 12,
+  //   right: 12,
+
+  //   borderRadius: 40,
+
+  //   paddingVertical: 14,
+  //   paddingHorizontal: 20,
+
+  //   flexDirection: "row",
+  //   justifyContent: "space-between",
+  //   alignItems: "center",
+  // },
+
+  rewardText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontFamily: Fonts.bold,
+    marginBottom:20
   },
 
   rewardRight: {
     flexDirection: "row",
-    alignItems: "center"
+    alignItems: "center",
+    marginRight:50,
+    marginHorizontal:20,
+    marginBottom:25,
   },
 
   coin: {
-    marginRight: 6
+    marginRight: 6,
+    fontSize: 16,
+    
   },
 
   points: {
-    color: "#fff",
-    fontWeight: "700"
+    color: "#FFF",
+    fontSize: 16,
+    fontFamily: Fonts.bold,
   },
 
   question: {
     textAlign: "center",
-    marginTop: 60,
+
     fontSize: 18,
+
+    color: "#000",
+
+    paddingHorizontal: 24,
+
+    marginTop: 10,
+
+    lineHeight: 28,
+
     fontFamily: Fonts.medium,
-    fontWeight: "500",
-    paddingHorizontal: 30
   },
 
   answerRow: {
     flexDirection: "row",
     justifyContent: "space-evenly",
-    marginTop: 25
+
+    marginTop: 28,
   },
 
   answerBtn: {
-    paddingHorizontal: 35,
-    paddingVertical: 5,
-    borderRadius: 12
+    minWidth: 120,
+    paddingVertical: 14,
+    height: 72,
+    borderRadius: 14,
+
+    alignItems: "center",
   },
 
   answerText: {
-    color: "#fff",
+    color: "#FFF",
     fontSize: 16,
-
-    fontFamily: Fonts.semiBold,
-  },
-  joinWrapper: {
-    alignItems: "center",
-    marginTop: -20,
-    zIndex: 10
-  },
-
-  joinGradient: {
-    paddingHorizontal: 110,
-    paddingVertical: 14,
-    borderRadius: 40,
-    shadowColor: "#3F0D97",
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
-    top: -40,
-  },
-
-  joinBtnText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600"
-  },
-
-
-  // tokenCard:{
-  //   marginHorizontal:20,
-  //   padding:22,
-  //   backgroundColor:"#fff",
-  //   borderRadius:22,
-  //   elevation:8,
-  //   marginTop:-20
-  // },
-
-  tokenCard: {
-    marginHorizontal: 20,
-    padding: 22,
-    backgroundColor: "#fff",
-    borderBottomLeftRadius: 15, borderBottomRightRadius: 15,
-    elevation: 8,
-    marginTop: -60
-  },
-
-
-
-  downloadIcon: {
-    width: 39,
-    height: 39,
-    borderRadius: 20,
-    backgroundColor: "#F1F1F1",
-    justifyContent: "center",
-    alignItems: "center"
-  },
-
-  limit: {
-    color: "red",
-    textAlign: "center",
-    fontSize: 13,
-    fontFamily: Fonts.regular,
-    marginTop: 10,
-  },
-
-  tokenTitle: {
-    fontSize: 20,
     fontFamily: Fonts.bold,
-    fontWeight: "600"
   },
 
-  tokenAmount: {
-    color: "#888",
-    marginTop: 2,
-    fontFamily: Fonts.regular,
-  },
+  /* CONNECTED WALLET */
 
-  whitePaper: {
-    backgroundColor: "#6A35FF",
-    padding: 14,
-    borderRadius: 15,
-    alignItems: "center",
-    marginTop: 20
-  },
-
-  // Custom Wallet Button Styles
-  connectWalletButton: {
-    borderRadius: 15,
-    overflow: 'hidden',
-  },
-  connectButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 15,
-  },
-  walletIcon: {
-    marginRight: 8,
-  },
-  connectButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: Fonts.semiBold,
-    fontWeight: '600',
-  },
   connectedWalletContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 15,
+    marginTop: 28,
+
+    backgroundColor: "rgba(255,255,255,0.12)",
+
+    borderRadius: 18,
+
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: "rgba(255,255,255,0.15)",
+
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
+
   walletInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
+
   connectedText: {
-    color: '#4CAF50',
-    fontSize: 14,
-    fontFamily: Fonts.medium,
+    color: "#4CD964",
+    fontSize: 15,
     marginLeft: 8,
+    fontFamily: Fonts.medium,
   },
+
   addressText: {
-    color: '#fff',
+    color: "#FFF",
     fontSize: 14,
-    fontFamily: Fonts.regular,
-    marginLeft: 12,
+    marginLeft: 10,
     opacity: 0.8,
+    fontFamily: Fonts.regular,
   },
+
   disconnectButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 82, 82, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+
+    backgroundColor: "rgba(255,82,82,0.12)",
+
+    justifyContent: "center",
+    alignItems: "center",
   },
+  trophy: {
+  width: "92%",
+  height: 220,
+
+  alignSelf: "center",
+
+  marginTop: 30,
+
+  resizeMode: "cover",
+
+  borderTopLeftRadius: 24,
+  borderTopRightRadius: 24,
+
+  overflow: "hidden",
+},
+
+rewardCard: {
+  width: "85%",
+
+  alignSelf: "center",
+
+  backgroundColor: "#FFF",
+
+  borderRadius: 18,
+  // borderBottomRightRadius: 8,
+
+  paddingTop: 55,
+  paddingBottom: 18,
+
+  marginTop: -18,
+
+  shadowColor: "#000",
+  shadowOpacity: 0.08,
+  shadowRadius: 10,
+
+  shadowOffset: {
+    width: 0,
+    height: 4,
+  },
+
+  elevation: 5,
+
+  overflow: "visible",
+},
+
+rewardBar: {
+  position: "absolute",
+    height: 84,
+
+  //top: -26,
+
+  alignSelf: "center",
+ width: "95%",
+    borderRadius: 40,
+    paddingVertical: 13,
+    paddingHorizontal: 20,
+ 
+
+  flexDirection: "row",
+  justifyContent: "space-between",
+  alignItems: "center",
+
+  // zIndex: 999,
+
+  // elevation: 10,
+},
 });
