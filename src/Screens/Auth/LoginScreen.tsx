@@ -29,7 +29,7 @@ import { Colors } from "../../Utils/Colors";
 import Fonts from "../../Utils/Fonts";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser,downloadWhitepaper } from "../../Store/Slices/authSlice";
+import { loginUser,downloadWhitepaper, googleLoginUser,facebookLoginUser } from "../../Store/Slices/authSlice";
 import { IMAGE_URL } from "@env";
 import FileViewer from "react-native-file-viewer";
 import ReactNativeBlobUtil from "react-native-blob-util";
@@ -38,7 +38,16 @@ import Google from '../../../assets/Icons/google.svg';
 import Fb from '../../../assets/Icons/fb.svg';
 import Apple from '../../../assets/Icons/apple.svg';
 import Logo from '../../../assets/Images/login_logo.svg';
-
+import messaging from '@react-native-firebase/messaging';
+import { sendFcmToken } from "../../Store/Slices/authSlice";
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { GOOGLE_CLIENT_ID,GOOGLE_API_KEY } from "@env";
+import { authorize } from 'react-native-app-auth';
+import {
+  LoginManager,
+  AccessToken,
+  Profile,
+} from 'react-native-fbsdk-next';
 export const LoginScreen = ({ navigation }: any) => {
 
   const { font, hp } = useResponsive();
@@ -56,7 +65,253 @@ const [errors, setErrors] = useState({
 useEffect(() => {
   loadRememberedUser();
 }, []);
+// const facebookAuthConfig = {
 
+//   redirectUrl: 'abcdefi://oauthredirect',
+
+//   scopes: ['public_profile', 'email'],
+
+//   serviceConfiguration: {
+//     authorizationEndpoint:
+//       'https://www.facebook.com/v19.0/dialog/oauth',
+
+//     tokenEndpoint:
+//       'https://graph.facebook.com/v19.0/oauth/access_token',
+//   },
+// };
+useEffect(() => {
+  GoogleSignin.configure({
+    webClientId: GOOGLE_CLIENT_ID, // from Firebase
+    offlineAccess: true,
+  });
+}, []);
+const handleGoogleLogin = async () => {
+  try {
+    await GoogleSignin.hasPlayServices();
+
+    // 🔥 Check if already signed in
+const currentUser = await GoogleSignin.getCurrentUser();
+const isSignedIn = !!currentUser;
+    let userInfo;
+
+    if (isSignedIn) {
+      // ✅ No popup (silent login)
+      userInfo = await GoogleSignin.signInSilently();
+      console.log("Silent Login:", userInfo);
+    } else {
+      // 👇 First time login
+      userInfo = await GoogleSignin.signIn();
+      console.log("Manual Login:", userInfo);
+    }
+
+    const idToken = userInfo?.data?.idToken || userInfo?.idToken;
+
+    if (!idToken) {
+      Alert.alert("Error", "Google token not found");
+      return;
+    }
+
+    // 🔥 API CALL
+    const res = await dispatch(googleLoginUser(idToken)).unwrap();
+
+    console.log("Google API Response:", res);
+
+    if (res?.token) {
+      await AsyncStorage.setItem("authToken", res.token);
+
+      // ✅ FIXED userId
+      const userId = res?.user?._id;
+
+      if (userId) {
+        await AsyncStorage.setItem("userId", String(userId));
+      }
+
+      // ✅ FCM
+      const fcmToken = await messaging().getToken();
+
+      if (userId && fcmToken) {
+        await dispatch(
+          sendFcmToken({
+            userId,
+            fcmToken,
+          })
+        ).unwrap();
+      }
+
+      navigation.replace("Main");
+
+    } else {
+      Alert.alert("Login Failed", res?.message || "Google login failed");
+    }
+
+  } catch (error: any) {
+    console.log("Google Login Error:", error);
+
+    // 🔥 If silent login fails → fallback to manual
+    if (error.code === "SIGN_IN_REQUIRED") {
+      try {
+        const userInfo = await GoogleSignin.signIn();
+
+        const idToken = userInfo?.data?.idToken || userInfo?.idToken;
+
+        if (!idToken) return;
+
+        const res = await dispatch(googleLoginUser(idToken)).unwrap();
+
+        if (res?.token) {
+          await AsyncStorage.setItem("authToken", res.token);
+
+          const userId = res?.user?._id;
+
+          if (userId) {
+            await AsyncStorage.setItem("userId", String(userId));
+          }
+
+          navigation.replace("Main");
+        }
+      } catch (err) {
+        console.log("Fallback Login Error:", err);
+      }
+    } else {
+      Alert.alert("Error", error.message || "Something went wrong");
+    }
+  }
+};
+const facebookLogin = async () => {
+  try {
+    // Clear old Facebook session
+    await LoginManager.logOut();
+
+    const result = await LoginManager.logInWithPermissions([
+      "public_profile",
+      "email",
+    ]);
+
+    if (result.isCancelled) {
+      return;
+    }
+
+    const data = await AccessToken.getCurrentAccessToken();
+
+    if (!data) {
+      Alert.alert("Error", "Access token not found");
+      return;
+    }
+
+    const accessToken = data.accessToken.toString();
+
+    console.log("FB TOKEN:", accessToken);
+
+  const res = await dispatch(
+  facebookLoginUser(accessToken)
+).unwrap();
+
+console.log(
+  "FB RESPONSE:",
+  JSON.stringify(res, null, 2)
+);
+
+if (res?.token) {
+  await AsyncStorage.setItem("authToken", res.token);
+
+  const userId = res?.user?._id;
+
+  if (userId) {
+    await AsyncStorage.setItem(
+      "userId",
+      String(userId)
+    );
+  }
+
+  navigation.reset({
+    index: 0,
+    routes: [{ name: "Main" }],
+  });
+} else {
+  Alert.alert(
+    "Login Failed",
+    res?.message || "Facebook login failed"
+  );
+}
+
+  } catch (error) {
+    console.log("FACEBOOK LOGIN ERROR:", error);
+
+    Alert.alert(
+      "Facebook Login Error",
+      error?.message || JSON.stringify(error)
+    );
+  }
+};
+// const facebookLogin = async () => {
+//   try {
+
+//     const result = await authorize(facebookAuthConfig);
+
+//     console.log("FB AUTH RESULT:", result);
+
+//     const accessToken = result.accessToken;
+
+//     if (!accessToken) {
+//       Alert.alert("Error", "Facebook access token not found");
+//       return;
+//     }
+
+//     // YOUR BACKEND LOGIN
+//     const res = await dispatch(
+//       facebookLoginUser(accessToken)
+//     ).unwrap();
+
+//     console.log("FB API Response:", res);
+
+//     if (res?.success && res?.token) {
+
+//       await AsyncStorage.setItem(
+//         "authToken",
+//         res.token
+//       );
+
+//       const userId = res?.user?._id;
+
+//       if (userId) {
+//         await AsyncStorage.setItem(
+//           "userId",
+//           String(userId)
+//         );
+//       }
+
+//       // SEND FCM TOKEN
+//       const fcmToken = await messaging().getToken();
+
+//       if (userId && fcmToken) {
+//         await dispatch(
+//           sendFcmToken({
+//             userId,
+//             fcmToken,
+//           })
+//         ).unwrap();
+//       }
+
+//       navigation.replace("Main");
+
+//     } else {
+
+//       Alert.alert(
+//         "Login Failed",
+//         res?.message || "Facebook login failed"
+//       );
+//     }
+
+//   } catch (error) {
+
+//     console.log("Facebook OAuth Error:", error);
+
+//     Alert.alert(
+//       "Facebook Login Error",
+//       error?.message || "Something went wrong"
+//     );
+//   }
+// };
 const loadRememberedUser = async () => {
   try {
     const savedUser = await AsyncStorage.getItem("rememberUser");
@@ -90,10 +345,29 @@ const loadRememberedUser = async () => {
       ? { email: email.toLowerCase(), password }
       : { mobileNumber: email, password };
   try {
-    const res = await dispatch(
-      loginUser(payload)
-    ).unwrap();
+        const res = await dispatch(loginUser(payload)).unwrap();
 
+ const userId = res?.userId;
+    const token = res?.token;
+
+    // ✅ SAVE USER DATA
+    await AsyncStorage.setItem("userId", userId);
+    await AsyncStorage.setItem("authToken", token);
+
+    // ✅ GET FCM TOKEN
+    const fcmToken = await messaging().getToken();
+
+    // console.log("FCM TOKEN:", fcmToken);
+
+    // ✅ SEND FCM TOKEN API
+    if (userId && fcmToken) {
+      await dispatch(
+        sendFcmToken({
+          userId,
+          fcmToken: fcmToken,
+        })
+      ).unwrap();
+    }
     // console.log("Login Success:", res);
 
     if (remember) {
@@ -313,7 +587,7 @@ const fileUrl = encodeURI(IMAGE_URL + fileName);
       {/* Social Login */}
 
      <View style={styles.socialRow}>
-  <TouchableOpacity style={styles.socialBtn}>
+  <TouchableOpacity onPress={handleGoogleLogin} style={styles.socialBtn}>
     <Google width={50} height={50}/>
     {/* <Image
       source={require("../../../assets/Icons/google.png")}
@@ -321,7 +595,7 @@ const fileUrl = encodeURI(IMAGE_URL + fileName);
     /> */}
   </TouchableOpacity>
 
-  <TouchableOpacity style={styles.socialBtn}>
+  <TouchableOpacity onPress={()=>  facebookLogin()} style={styles.socialBtn}>
     <Fb width={50} height={50}/>
     {/* <Image
       source={require("../../../assets/Icons/fb.png")}
@@ -329,13 +603,13 @@ const fileUrl = encodeURI(IMAGE_URL + fileName);
     /> */}
   </TouchableOpacity>
 
-  <TouchableOpacity style={styles.socialBtn}>
+  {/* <TouchableOpacity style={styles.socialBtn}>
     <Apple width={50} height={50}/>
     {/* <Image
       source={require("../../../assets/Icons/apple.png")}
       style={styles.social}
-    /> */}
-  </TouchableOpacity>
+    /> 
+  </TouchableOpacity> */}
 </View>
 
       {/* Whitepaper Card */}

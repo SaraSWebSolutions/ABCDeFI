@@ -1,3 +1,4 @@
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { api } from "./axiosConfig";
 
 export const AuthService = {
@@ -123,7 +124,18 @@ about:async(data: void)=>{
     const response=await api.get('about/');
     return response.data;
   },
-
+getFcm:async(data:any)=>{
+  const response =await api.post('user/get-fcm',data)
+  return response.data
+},
+googlelogin:async(data:any)=>{
+  const response =await api.post('auth/google/mobile',data)
+  return response.data
+},
+facebooklogin:async(data:any)=>{
+  const response =await api.post('auth/facebook/mobile',data)
+  return response.data
+},
 
 
 };

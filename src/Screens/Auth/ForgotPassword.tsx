@@ -93,10 +93,10 @@ if (method === "email") {
       ).unwrap();
 
       // console.log("Forgot Success:", res);
-Alert.alert(
-  "Success",
-   `Your One-Time Password (OTP): ${res?.otp}`
-);
+// Alert.alert(
+//   "Success",
+//    `Your One-Time Password (OTP): ${res?.otp}`
+// );
       //  Navigate after success
       navigation.navigate("OtpVerify", {
         contact: value,

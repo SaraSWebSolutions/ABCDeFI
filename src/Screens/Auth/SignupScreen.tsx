@@ -9,7 +9,9 @@ import {
   Alert,
   Image,
   Modal, FlatList,
-  TextInput
+  TextInput,
+  Platform,
+  PermissionsAndroid
 } from "react-native";
 
 import { useResponsive } from "../../Utils/Responsive";
@@ -35,6 +37,8 @@ import { registerUser, getPrivacy } from "../../Store/Slices/authSlice";
 import PhoneInput from "react-native-phone-number-input";
 import {Snackbar} from "react-native-snackbar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import messaging from '@react-native-firebase/messaging';
+import { sendFcmToken } from "../../Store/Slices/authSlice";
 export const SignupScreen = ({ navigation }: any) => {
 const phoneRef = useRef(null);
   const { font } = useResponsive();
@@ -74,71 +78,100 @@ const [search, setSearch] = useState("");
   const { privacy, loading } = useSelector(
     (state: any) => state.auth
   );
-  const onRegister = async () => {
+  const requestPermission = async () => {
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    );
+  }
+};
+ const onRegister = async () => {
+  const newErrors = {
+    username: validateUsername(username),
+    mobile: validateMobile(phone),
+    email: validateEmailOrPhone(email),
+    password: validatePassword(password),
+    confirmPassword: validateConfirmPassword(password, confirmPassword),
+    gender: validateDropdown(gender, "Gender"),
+    country: validateDropdown(country, "Country"),
+    terms: validateTerms(agree),
+  };
 
-    const newErrors = {
-      username: validateUsername(username),
-      mobile: validateMobile(phone),
-      email: validateEmailOrPhone(email),
-      password: validatePassword(password),
-      confirmPassword: validateConfirmPassword(password, confirmPassword),
-      gender: validateDropdown(gender, "Gender"),
-      country: validateDropdown(country, "Country"),
-      terms: validateTerms(agree),
+  setErrors(newErrors);
+
+  const hasError = Object.values(newErrors).some(e => e !== "");
+  if (hasError) return;
+
+  try {
+    const payload = {
+      name: username,
+      email: email.toLowerCase().trim(),
+      mobileNumber: phone,
+      password: password,
+      gender: gender.toLowerCase(),
+      country: country,
+      privacyData: agree,
     };
 
-    setErrors(newErrors);
+    // ✅ 1. REGISTER API
+    const res = await dispatch(registerUser(payload)).unwrap();
 
-    const hasError = Object.values(newErrors).some(e => e !== "");
-    if (hasError) return;
+    console.log("REGISTER RESPONSE:", res);
 
+    const userId = res?.userId;
+
+    // ✅ 2. GET FCM TOKEN
+    let fcmToken = "";
     try {
-
-      //  Prepare payload (IMPORTANT)
-      const payload = {
-        name: username,
-        email: email.toLowerCase().trim(),
-mobileNumber: phone,
-//countryCode: countryCode,
-        password: password,
-        gender: gender.toLocaleLowerCase(),
-        country: country,
-        privacyData: agree
-
-      };
-
-      // console.log("REGISTER PAYLOAD:", payload);
-
-      const res = await dispatch(registerUser(payload)).unwrap();
-
-      // console.log("Register Success:", res);
-
-Alert.alert(
-  "Success",
-  res?.message
-  // `Registration completed successfully.\n\n Your One-Time Password (OTP): ${res?.otp}`
-);
-      
-      navigation.navigate("OtpVerify", { isforgot: false, userId: res?.userId });
-setUsername("");
-setMobile("");
-setPhone("");
-setEmail("");
-setPassword("");
-setConfirmPassword("");
-setGender("");
-setCountry("");
-setAgree(false);
-phoneRef.current?.setState({
-  number: "",
-});
-    } catch (err: any) {
-
-      // console.log("Register Error:", err);
-
-      Alert.alert("Register Failed", err?.message || "Something went wrong");
+      await requestPermission(); // if not already
+      fcmToken = await messaging().getToken();
+      console.log("FCM TOKEN:", fcmToken);
+    } catch (e) {
+      console.log("FCM ERROR:", e);
     }
-  };
+
+    // ✅ 3. SEND FCM TOKEN API
+    if (userId && fcmToken) {
+      await dispatch(
+        sendFcmToken({
+          userId: userId,
+          fcmToken: fcmToken,
+        })
+      ).unwrap();
+
+      console.log("FCM token sent successfully");
+    }
+
+    // ✅ 4. SUCCESS ALERT
+    Alert.alert("Success", res?.message);
+
+    // ✅ 5. NAVIGATE AFTER EVERYTHING DONE
+    navigation.navigate("OtpVerify", {
+      isforgot: false,
+      userId: userId,
+    });
+
+    // ✅ 6. RESET FORM
+    setUsername("");
+    setMobile("");
+    setPhone("");
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setGender("");
+    setCountry("");
+    setAgree(false);
+
+    phoneRef.current?.setState({
+      number: "",
+    });
+
+  } catch (err: any) {
+    console.log("Register Error:", err);
+
+    Alert.alert("Register Failed", err?.message || "Something went wrong");
+  }
+};
   const contentList = privacy?.[0]?.content || [];
   const filteredCountries = countryList.filter((item) =>
   item.label.toLowerCase().includes(search.toLowerCase())

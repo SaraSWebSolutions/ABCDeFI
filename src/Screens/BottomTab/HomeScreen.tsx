@@ -308,6 +308,8 @@ const imageUrl = profileData?.image
   : null;
 // console.log("IMAGE_URL:", imgError,IMAGE_URL);
 // console.log("FINAL URL:", IMAGE_URL + profileData?.image);
+const displayName =
+  (profileData?.name || user?.name || "Guest").slice(0, 20);
 return (
 <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
   <ScrollView
@@ -323,16 +325,15 @@ return (
             colors={["#1A0048", "#5B2BD6", "#9F7BFF"]}
             style={styles.topSection}
           >
-
-            {/* HEADER */}
-
             <View style={styles.header}>
-
-  <TouchableOpacity
-    onPress={() => navigation.navigate("SettingsScreen")}
-    style={{ flexDirection: "row", alignItems: "center" }}
-  >
-    <FastImage
+  
+  {/* LEFT SIDE */}
+  <View style={{ flex: 1 }}>
+    <TouchableOpacity
+      onPress={() => navigation.navigate("SettingsScreen")}
+      style={{ flexDirection: "row", alignItems: "center" }}
+    >
+ <FastImage
 
   key={imageUrl}
   source={
@@ -347,21 +348,33 @@ return (
     defaultSource={require("../../../assets/Images/place.jpg")}
 
 />
+      <View style={{ marginLeft: 10, flex: 1 }}>
+        <Text style={styles.greet}>Welcome back !</Text>
 
-                <View style={{ marginLeft: 10 }}>
-                  <Text style={styles.greet}>Welcome back !</Text>
-                  <Text style={styles.name}>
-                    {profileData?.name || user?.name || "Guest"}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+        <Text
+          style={styles.name}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {profileData?.name || user?.name || "Guest"}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  </View>
 
-  {/*  Separate bell */}
-  <TouchableOpacity onPress={()=>navigation.navigate('NotificationScreen')} style={styles.bell}>
+  {/* RIGHT SIDE */}
+  <TouchableOpacity
+    onPress={() => navigation.navigate('NotificationScreen')}
+    style={styles.bell}
+  >
     <Icon name="notifications-outline" size={24} color="#FFF" />
   </TouchableOpacity>
 
-            </View>
+</View>
+
+            {/* HEADER */}
+
+           
 
 
             {/* TIMER BOX */}
@@ -653,10 +666,12 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    color: "#fff",
+    color: "#FFF",
     fontSize: 20,
     fontFamily: Fonts.bold,
-    fontWeight: "700"
+    fontWeight: "700",
+  flexShrink: 1,   // 🔥 IMPORTANT
+  flexWrap: "wrap",
   },
 
   bell: {

@@ -268,6 +268,84 @@ export const forgotPasswordEmail = createAsyncThunk(
     }
   }
 );
+export const sendFcmToken = createAsyncThunk(
+  "auth/sendFcmToken",
+  async (data: { userId: string; fcmToken: string }, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(showLoader());
+
+      const response = await AuthService.getFcm(data);
+
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || "FCM token send failed"
+      );
+    } finally {
+      dispatch(hideLoader());
+    }
+  }
+);
+
+
+export const googleLoginUser = createAsyncThunk(
+  "auth/googleLoginUser",
+  async (idToken: string, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(showLoader());
+
+      const response = await AuthService.googlelogin({
+        token: idToken,
+      });
+
+      const token = response?.token;
+
+      // ✅ SAME AS loginUser
+      if (token) {
+        await AsyncStorage.setItem("token", token);
+        api.defaults.headers.Authorization = `Bearer ${token}`;
+      }
+
+      return response;
+
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || "Google login failed"
+      );
+    } finally {
+      dispatch(hideLoader());
+    }
+  }
+);
+export const facebookLoginUser = createAsyncThunk(
+  "auth/facebookLoginUser",
+  async (accessToken: string, { rejectWithValue, dispatch }) => {
+    try {
+      dispatch(showLoader());
+
+      const response = await AuthService.facebooklogin({
+        accessToken, // ✅ match your API
+      });
+
+      const token = response?.token;
+
+      // ✅ SAME AS OTHER LOGINS
+      if (token) {
+        await AsyncStorage.setItem("token", token);
+        api.defaults.headers.Authorization = `Bearer ${token}`;
+      }
+
+      return response;
+
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data || "Facebook login failed"
+      );
+    } finally {
+      dispatch(hideLoader());
+    }
+  }
+);
 //  INITIAL STATE
 const initialState = {
   user: null,
@@ -286,6 +364,8 @@ const initialState = {
   changePasswordSuccess: false,  
   forgotEmailData: null as any,
 forgotEmailSuccess: false,   
+fcmSuccess: false,
+fcmData: null as any, 
 };
 
 
@@ -471,6 +551,46 @@ console.log(action.payload,"action.payloadaction.payload");
   state.loading = false;
   state.error = action.payload;
   state.forgotEmailSuccess = false;
+})
+// ✅ SEND FCM TOKEN
+.addCase(sendFcmToken.pending, (state) => {
+  state.loading = true;
+  state.error = null;
+  state.fcmSuccess = false;
+})
+.addCase(sendFcmToken.fulfilled, (state, action) => {
+  state.loading = false;
+  state.fcmSuccess = true;
+  state.fcmData = action.payload;
+})
+.addCase(sendFcmToken.rejected, (state, action: any) => {
+  state.loading = false;
+  state.error = action.payload;
+  state.fcmSuccess = false;
+})
+.addCase(googleLoginUser.pending, (state) => {
+  state.loading = true;
+})
+.addCase(googleLoginUser.fulfilled, (state, action) => {
+  state.loading = false;
+  state.user = action.payload?.user || action.payload;
+  state.token = action.payload?.token;
+})
+.addCase(googleLoginUser.rejected, (state, action) => {
+  state.loading = false;
+  state.error = action.payload;
+})
+.addCase(facebookLoginUser.pending, (state) => {
+  state.loading = true;
+})
+.addCase(facebookLoginUser.fulfilled, (state, action) => {
+  state.loading = false;
+  state.user = action.payload?.user || action.payload;
+  state.token = action.payload?.token;
+})
+.addCase(facebookLoginUser.rejected, (state, action: any) => {
+  state.loading = false;
+  state.error = action.payload;
 })
 }
 });

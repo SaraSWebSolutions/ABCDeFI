@@ -36,6 +36,9 @@ local.properties
 .kotlin/
 android/gradle.properties
 
+# 🔐 Firebase config (IMPORTANT)
+android/app/google-services.json
+
 # node.js
 #
 node_modules/
