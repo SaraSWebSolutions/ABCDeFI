@@ -44,7 +44,7 @@ export default function AccountSettingsScreen({ navigation }: any) {
           colors={["#7B3EF0", "#3F0D97"]}
           style={styles.header}
         >
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Icon name="chevron-back" size={font(26)} color={'#FFF'} />
           </TouchableOpacity>
           <Text style={styles.title}>Account Settings</Text>
@@ -140,14 +140,25 @@ const createStyles = (wp: (percent: number) => number, hp: { (percent: number): 
         flexDirection: "row",
         alignItems: "center",
         marginBottom: hp(2),
-        padding:18,
-        
+        // padding:18,
+        height:80
       },
+backButton: {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: 'rgba(255,255,255,0.16)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.12)',
+    marginHorizontal:wp(3)
 
+},
       title: {
-        fontSize: font(20),
+        fontSize:font(20),
         color:'#FFF',
-        marginTop:5,
+        //marginTop:5,
         fontFamily: Fonts.semiBold,
         marginLeft: space(3),
         textAlign:'center',

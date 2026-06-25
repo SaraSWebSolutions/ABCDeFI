@@ -24,8 +24,9 @@ api.interceptors.request.use(
     } else {
       config.headers["Content-Type"] = "application/json";
     }
+const fullUrl = `${config.baseURL}${config.url}`;
 
-    console.log("🚀 API Request:", config.url);
+    console.log("🚀 API Request:", fullUrl);
     console.log("👉 token:", token);
     console.log("👉 Body:", config.data);
 

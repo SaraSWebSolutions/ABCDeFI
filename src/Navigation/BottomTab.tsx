@@ -9,7 +9,6 @@ import HomeScreen from "../Screens/BottomTab/HomeScreen";
 import { CustomTabBar } from "./CustomTabBar";
 
 const Tab = createBottomTabNavigator();
-
 export const BottomTabs = () => {
 
   return (

@@ -58,7 +58,7 @@ const [activeIndex, setActiveIndex] = useState<number | null>(null);
   colors={["#7B3EF0", "#3F0D97"]}
   style={styles.header}
 >
-  <TouchableOpacity onPress={() => navigation.goBack()}>
+  <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
     <Ionicons name="chevron-back" size={font(26)} color="#fff" />
   </TouchableOpacity>
 
@@ -148,7 +148,16 @@ const createStyles = (wp: (percent: number) => number, hp: { (percent: number): 
         padding:18,
         
       },
-
+backButton: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: 'rgba(255,255,255,0.14)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.12)',
+},
       title: {
         fontSize: font(20),
         color:'#FFF',
