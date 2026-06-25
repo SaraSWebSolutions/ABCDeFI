@@ -351,8 +351,13 @@ const loadRememberedUser = async () => {
     const token = res?.token;
 
     // ✅ SAVE USER DATA
-    await AsyncStorage.setItem("userId", userId);
-    await AsyncStorage.setItem("authToken", token);
+   if (userId) {
+  await AsyncStorage.setItem("userId", String(userId));
+}
+
+if (token) {
+  await AsyncStorage.setItem("authToken", token);
+}
 
     // ✅ GET FCM TOKEN
     const fcmToken = await messaging().getToken();
@@ -384,7 +389,7 @@ const loadRememberedUser = async () => {
 
   } catch (err: any) {
 
-    // console.log("Login Error:", err);
+  console.log("Login Error:", err);
 
     Alert.alert("Login Failed", err.data?.message || "Something went wrong");
   }

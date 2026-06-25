@@ -121,7 +121,7 @@ return (
       style={styles.backButton}
     >
       <Icon
-        name="chevron-back"
+        name="arrow-back-outline"
         size={24}
         color="#FFF"
       />
@@ -356,13 +356,21 @@ backButton: {
   borderWidth: 1,
   borderColor: 'rgba(255,255,255,0.12)',
 },
-
+  //  settingsTitle: {
+  //     fontSize: font(18),
+  //     color: "#FFF",
+  //     fontFamily: Fonts.semiBold,
+  //     // marginLeft: space(1),
+  //     flex: 1,
+  //     textAlign: "center",
+  //   },
 settingsTitle: {
   color: '#FFF',
   fontSize:font(20),
   // fontWeight: '700',
   fontFamily: Fonts.bold,
-  marginLeft: 18,
+ marginLeft: space(9),
+  
 },
  header: {
         flexDirection: "row",

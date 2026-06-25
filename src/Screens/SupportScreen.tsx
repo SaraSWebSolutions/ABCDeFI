@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
+  StatusBar
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -53,13 +54,22 @@ const [activeIndex, setActiveIndex] = useState<number | null>(null);
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+<View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
+  <SafeAreaView
+    edges={['top']}
+    style={{ backgroundColor: '#7B3EF0' }}
+  />
+
+  <StatusBar
+    barStyle="light-content"
+    backgroundColor="#3B0D97"
+  />
         <LinearGradient
   colors={["#7B3EF0", "#3F0D97"]}
   style={styles.header}
 >
   <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-    <Ionicons name="chevron-back" size={font(26)} color="#fff" />
+    <Ionicons name="arrow-back-outline" size={font(26)} color="#fff" />
   </TouchableOpacity>
 
   <Text style={styles.title}>Help & Support</Text>
@@ -133,7 +143,7 @@ const [activeIndex, setActiveIndex] = useState<number | null>(null);
         </View>
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 
  
@@ -163,8 +173,9 @@ backButton: {
         color:'#FFF',
         marginTop:5,
         fontFamily: Fonts.semiBold,
-        marginLeft: space(3),
+        marginLeft: space(9),
         textAlign:'center',
+
         justifyContent:'center'
       },
 

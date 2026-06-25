@@ -8,6 +8,7 @@ import {
   Switch,
   ScrollView,
   Alert,
+  StatusBar
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -39,13 +40,22 @@ export default function AccountSettingsScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+   <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
+     <SafeAreaView
+       edges={['top']}
+       style={{ backgroundColor: '#7B3EF0' }}
+     />
+   
+     <StatusBar
+       barStyle="light-content"
+       backgroundColor="#3B0D97"
+     />
         <LinearGradient
           colors={["#7B3EF0", "#3F0D97"]}
           style={styles.header}
         >
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={font(26)} color={'#FFF'} />
+            <Icon name="arrow-back-outline" size={font(26)} color={'#FFF'} />
           </TouchableOpacity>
           <Text style={styles.title}>Account Settings</Text>
         </LinearGradient>
@@ -117,7 +127,7 @@ export default function AccountSettingsScreen({ navigation }: any) {
         </TouchableOpacity> */}
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -160,7 +170,7 @@ backButton: {
         color:'#FFF',
         //marginTop:5,
         fontFamily: Fonts.semiBold,
-        marginLeft: space(3),
+        marginLeft: space(9),
         textAlign:'center',
         justifyContent:'center'
       },

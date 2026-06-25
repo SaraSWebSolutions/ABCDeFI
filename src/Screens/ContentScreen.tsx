@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  StatusBar
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -59,12 +60,23 @@ const contentList =
   const styles = createStyles(wp, hp, font, space);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
+   <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
+  <SafeAreaView
+    edges={['top']}
+    style={{ backgroundColor: '#7B3EF0' }}
+  />
+
+  <StatusBar
+    barStyle="light-content"
+    backgroundColor="#3B0D97"
+  />
+
+
       
       {/* HEADER */}
       <LinearGradient colors={["#7B3EF0", "#3F0D97"]} style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={font(26)} color="#fff" />
+          <Ionicons name="arrow-back-outline" size={font(26)} color="#fff" />
         </TouchableOpacity>
 
         <Text style={styles.title}>{getTitle()}</Text>
@@ -86,7 +98,7 @@ const contentList =
         ) }
 
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -102,7 +114,7 @@ const createStyles = (wp: any, hp: any, font: any, space: any) =>
       fontSize: font(18),
       color: "#FFF",
       fontFamily: Fonts.semiBold,
-      marginLeft: space(3),
+      // marginLeft: space(3),
       flex: 1,
       textAlign: "center",
     },

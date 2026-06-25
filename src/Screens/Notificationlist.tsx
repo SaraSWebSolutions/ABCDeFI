@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  StatusBar
 } from "react-native";
 
 import LinearGradient from "react-native-linear-gradient";
@@ -64,15 +65,23 @@ export default function NotificationScreen({ navigation }: any) {
   );
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-      
+<View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
+  <SafeAreaView
+    edges={['top']}
+    style={{ backgroundColor: '#7B3EF0' }}
+  />
+
+  <StatusBar
+    barStyle="light-content"
+    backgroundColor="#3B0D97"
+  />      
       {/* HEADER */}
       <LinearGradient
         colors={["#7B3EF0", "#3F0D97"]}
         style={styles.header}
       >
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={26} color={"#FFF"} />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back-outline" size={26} color={"#FFF"} />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Notifications</Text>
@@ -93,7 +102,7 @@ export default function NotificationScreen({ navigation }: any) {
           showsVerticalScrollIndicator={false}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 const createStyles = (wp, hp, font, space) =>
@@ -103,12 +112,21 @@ const createStyles = (wp, hp, font, space) =>
       alignItems: "center",
       padding: 18,
     },
-
+backButton: {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: 'rgba(255,255,255,0.14)',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: 'rgba(255,255,255,0.12)',
+},
     headerTitle: {
       fontSize: font(20),
       color: "#FFF",
       fontFamily: Fonts.semiBold,
-      marginLeft: space(3),
+      marginLeft: space(9),
     },
 
     card: {

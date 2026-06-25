@@ -10,6 +10,7 @@ import {
   BackHandler,
   PermissionsAndroid,
   Platform,
+  StatusBar
 } from 'react-native';
 
 import LinearGradient from 'react-native-linear-gradient';
@@ -312,7 +313,17 @@ export default function HomeScreen({ navigation }: any) {
   // console.log("FINAL URL:", IMAGE_URL + profileData?.image);
   const displayName = (profileData?.name || user?.name || 'Guest').slice(0, 20);
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
+  <SafeAreaView
+    edges={['top']}
+    style={{ backgroundColor: '#1A0048' }}
+  />
+
+  <StatusBar
+    barStyle="light-content"
+    backgroundColor="#3B0D97"
+  />
+
       <ScrollView
         contentContainerStyle={{ paddingBottom: 80 }}
         showsVerticalScrollIndicator={false}
@@ -608,7 +619,7 @@ style={styles.joinGradient}
         onClose={() => setShowWalletModal(false)}
         onWalletConnect={handleWalletConnect}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -11,6 +11,7 @@ import {
   FlatList,
   TextInput,
   Platform,
+  StatusBar
 } from "react-native";
 
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -191,13 +192,23 @@ const imageUrl = profileData?.image
   : null;
   return (
     
-    <SafeAreaView style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#F5F5F5" }}>
+  <SafeAreaView
+    edges={['top']}
+    style={{ backgroundColor: '#7B3EF0' }}
+  />
+
+  <StatusBar
+    barStyle="light-content"
+    backgroundColor="#3B0D97"
+  />
+
           <LinearGradient
          colors={["#7B3EF0", "#3F0D97"]}
          style={styles.header}
        >
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Icon name="chevron-back" size={26} color={'#FFF'}/>
+            <Icon name="arrow-back-outline" size={26} color={'#FFF'}/>
           </TouchableOpacity>
           <Text style={[styles.title, { fontSize: font(20),textAlign:'center' }]}>
             Edit Profile
@@ -354,7 +365,8 @@ const imageUrl = profileData?.image
         </View>
       </Modal>
 
-    </SafeAreaView>
+    </View>
+
   );
 };
 
@@ -381,7 +393,8 @@ backButton: {
 },
       title: {
      color: '#FFF',
-  fontSize: 26,
+  fontSize: font(22),
+   marginLeft: space(9),
   fontWeight: '700',
   fontFamily: Fonts.bold,
   letterSpacing: 0.3,
