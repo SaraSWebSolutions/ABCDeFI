@@ -110,10 +110,12 @@ export const WalletModal: React.FC<WalletModalProps> = ({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="pageSheet"
+      // presentationStyle="pageSheet"
+       presentationStyle="fullScreen"
+  statusBarTranslucent
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView  edges={['top','left','right','bottom']}style={styles.container}>
         <LinearGradient
           colors={['#1A0048', '#5B2BD6', '#9F7BFF']}
           style={styles.gradientBackground}
@@ -164,7 +166,7 @@ const styles = StyleSheet.create({
   },
   gradientBackground: {
     flex: 1,
-    paddingHorizontal: 20,
+    // paddingHorizontal: 20,
   },
   header: {
     flexDirection: 'row',

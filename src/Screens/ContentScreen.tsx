@@ -104,20 +104,23 @@ const contentList =
 
 const createStyles = (wp: any, hp: any, font: any, space: any) =>
   StyleSheet.create({
-    header: {
-      flexDirection: "row",
-      alignItems: "center",
-      padding: 18,
-    },
-
-    title: {
-      fontSize: font(18),
-      color: "#FFF",
-      fontFamily: Fonts.semiBold,
-      // marginLeft: space(3),
-      flex: 1,
-      textAlign: "center",
-    },
+   header: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: hp(2),
+        //padding:18,
+         height: 80,
+         
+      },
+      title: {
+     color: '#FFF',
+  fontSize: font(22),
+   marginLeft: space(9),
+  fontWeight: '700',
+  fontFamily: Fonts.bold,
+  letterSpacing: 0.3,
+    marginHorizontal:wp(3)
+      },
 backButton: {
   width: 44,
   height: 44,
@@ -127,6 +130,8 @@ backButton: {
   alignItems: 'center',
   borderWidth: 1,
   borderColor: 'rgba(255,255,255,0.12)',
+      marginHorizontal:wp(3)
+
 },    contentText: {
       fontSize: font(14),
       lineHeight: 22,

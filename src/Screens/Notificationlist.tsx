@@ -108,10 +108,22 @@ export default function NotificationScreen({ navigation }: any) {
 const createStyles = (wp, hp, font, space) =>
   StyleSheet.create({
     header: {
-      flexDirection: "row",
-      alignItems: "center",
-      padding: 18,
-    },
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: hp(2),
+        //padding:18,
+         height: 80,
+         
+      },
+      headerTitle: {
+     color: '#FFF',
+  fontSize: font(22),
+   marginLeft: space(9),
+  fontWeight: '700',
+  fontFamily: Fonts.bold,
+  letterSpacing: 0.3,
+    marginHorizontal:wp(3)
+      },
 backButton: {
   width: 44,
   height: 44,
@@ -121,13 +133,15 @@ backButton: {
   alignItems: 'center',
   borderWidth: 1,
   borderColor: 'rgba(255,255,255,0.12)',
+      marginHorizontal:wp(3)
+
 },
-    headerTitle: {
-      fontSize: font(20),
-      color: "#FFF",
-      fontFamily: Fonts.semiBold,
-      marginLeft: space(9),
-    },
+    // headerTitle: {
+    //   fontSize: font(20),
+    //   color: "#FFF",
+    //   fontFamily: Fonts.semiBold,
+    //   marginLeft: space(9),
+    // },
 
     card: {
       flexDirection: "row",

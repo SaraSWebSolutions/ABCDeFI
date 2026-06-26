@@ -383,6 +383,7 @@ backButton: {
   alignItems: 'center',
   borderWidth: 1,
   borderColor: 'rgba(255,255,255,0.12)',
+  marginHorizontal:wp(3)
 },
   //  settingsTitle: {
   //     fontSize: font(18),
