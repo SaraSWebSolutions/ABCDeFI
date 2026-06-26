@@ -129,11 +129,11 @@ getFcm:async(data:any)=>{
   return response.data
 },
 googlelogin:async(data:any)=>{
-  const response =await api.post('auth/google/mobile',data)
+  const response =await api.get('auth/google',data)
   return response.data
 },
 facebooklogin:async(data:any)=>{
-  const response =await api.post('auth/facebook/mobile',data)
+  const response =await api.get('auth/facebook',data)
   return response.data
 },
 
