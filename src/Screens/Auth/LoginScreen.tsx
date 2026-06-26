@@ -327,6 +327,29 @@ const loadRememberedUser = async () => {
     // console.log("Load Error:", error);
   }
 };
+const getFcmToken = async () => {
+  try {
+    if (Platform.OS === "ios") {
+      await messaging().registerDeviceForRemoteMessages();
+
+      const authStatus = await messaging().requestPermission();
+
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+      if (!enabled) {
+        console.log("Notification permission denied");
+        return null;
+      }
+    }
+
+    return await messaging().getToken();
+  } catch (e) {
+    console.log("FCM Error:", e);
+    return null;
+  }
+};
  const onLogin = async () => {
 
   const newErrors = {
@@ -360,8 +383,7 @@ if (token) {
 }
 
     // ✅ GET FCM TOKEN
-    const fcmToken = await messaging().getToken();
-
+const fcmToken = await getFcmToken();
     // console.log("FCM TOKEN:", fcmToken);
 
     // ✅ SEND FCM TOKEN API

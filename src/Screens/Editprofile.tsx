@@ -380,6 +380,15 @@ const createStyles = (wp: (percent: number) => number, hp: { (percent: number): 
          height: 80,
          
       },
+      title: {
+     color: '#FFF',
+  fontSize: font(22),
+   marginLeft: space(9),
+  fontWeight: '700',
+  fontFamily: Fonts.bold,
+  letterSpacing: 0.3,
+    marginHorizontal:wp(3)
+      },
 backButton: {
   width: 42,
   height: 42,
@@ -391,18 +400,7 @@ backButton: {
   borderColor: 'rgba(255,255,255,0.12)',
   marginHorizontal:wp(3)
 },
-      title: {
-     color: '#FFF',
-  fontSize: font(22),
-   marginLeft: space(9),
-  fontWeight: '700',
-  fontFamily: Fonts.bold,
-  letterSpacing: 0.3,
-    marginHorizontal:wp(3)
       
-        
-  
-      },
   container: { padding: 20 },
 
  

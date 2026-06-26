@@ -94,7 +94,7 @@ return (
     {/* Status Bar Area */}
     <SafeAreaView
       edges={['top']}
-      style={{ backgroundColor: '#3B0D97' }}
+      style={{ backgroundColor: '#7B3EF0' }}
     />
 
     {/* Main Screen */}
@@ -102,8 +102,18 @@ return (
       edges={['left', 'right', 'bottom']}
       style={{ flex: 1, backgroundColor: '#fff' }}
     >
-
 <LinearGradient
+         colors={["#7B3EF0", "#3F0D97"]}
+         style={styles.header}
+       >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back-outline" size={26} color={'#FFF'}/>
+          </TouchableOpacity>
+          <Text style={[styles.title, { fontSize: font(20),textAlign:'center' }]}>
+            Settings
+          </Text>
+        </LinearGradient>
+{/* <LinearGradient
   colors={['#3B0D97', '#3B0D97', '#3B0D97']}
   start={{ x: 0, y: 0 }}
   end={{ x: 1, y: 1 }}
@@ -133,7 +143,7 @@ return (
 
   </View>
 
-</LinearGradient>
+</LinearGradient> */}
 <ScrollView showsVerticalScrollIndicator={false}   contentContainerStyle={{ flexGrow: 1 }}>
 
 <View style={styles.container}>
@@ -322,10 +332,28 @@ container:{
 padding:space(5)
 
 },
+header: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: hp(2),
+        //padding:18,
+         height: 80,
+         
+      },
+      title: {
+     color: '#FFF',
+  fontSize: font(22),
+   marginLeft: space(9),
+  fontWeight: '700',
+  fontFamily: Fonts.bold,
+  letterSpacing: 0.3,
+    marginHorizontal:wp(3)
+      },
 settingsHeader: {
   //paddingTop: 14,
   paddingBottom: 20,
-
+ height: 80,
+   marginBottom: hp(2),
   // borderBottomLeftRadius: 28,
   // borderBottomRightRadius: 28,
 
@@ -372,23 +400,23 @@ settingsTitle: {
  marginLeft: space(9),
   
 },
- header: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginBottom: hp(2),
-        padding:18,
+//  header: {
+//         flexDirection: "row",
+//         alignItems: "center",
+//         marginBottom: hp(2),
+//         padding:18,
         
-      },
+//       },
 
-      title: {
-        fontSize: font(20),
-        color:'#FFF',
-        marginTop:5,
-        fontFamily: Fonts.semiBold,
-        marginLeft: space(3),
-        textAlign:'center',
-        justifyContent:'center'
-      },
+//       title: {
+//         fontSize: font(20),
+//         color:'#FFF',
+//         marginTop:5,
+//         fontFamily: Fonts.semiBold,
+//         marginLeft: space(3),
+//         textAlign:'center',
+//         justifyContent:'center'
+//       },
 profileCard: {
     flexDirection: "row",
     alignItems: "center",
