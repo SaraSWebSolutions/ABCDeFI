@@ -22,17 +22,45 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>abcdefi</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>abcdefi</string>
-			</array>
-		</dict>
-	</array>
+<key>CFBundleURLTypes</key>
+<array>
+
+    <!-- App Deep Link -->
+    <dict>
+        <key>CFBundleURLName</key>
+        <string>abcdefi</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>abcdefi</string>
+        </array>
+    </dict>
+
+    <!-- Google Sign In -->
+    <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>$(GOOGLE_REVERSED_CLIENT_ID)</string>
+        </array>
+    </dict>
+
+    <!-- Facebook -->
+    <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+            <string>fb$(FACEBOOK_APP_ID)</string>
+        </array>
+    </dict>
+
+</array>
+
+<key>FacebookAppID</key>
+<string>$(FACEBOOK_APP_ID)</string>
+
+<key>FacebookClientToken</key>
+<string>$(FACEBOOK_CLIENT_TOKEN)</string>
+
+<key>FacebookDisplayName</key>
+<string>ABCDeFi</string>	
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>

@@ -13,6 +13,7 @@ import { Loader } from "./Components/CommanLoader"
 import { useAutoConnect } from "thirdweb/react"
 import messaging from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
+import Config from 'react-native-config';
 
 const queryClient = new QueryClient()
 
@@ -26,6 +27,8 @@ function AutoConnectHandler() {
 
 export default function App() {
  useEffect(() => {
+  console.log('FACEBOOK_APP_ID:', Config.FACEBOOK_APP_ID);
+console.log('GOOGLE_CLIENT_ID:', Config.GOOGLE_CLIENT_ID);
     async function createChannel() {
       await notifee.createChannel({
         id: 'default',

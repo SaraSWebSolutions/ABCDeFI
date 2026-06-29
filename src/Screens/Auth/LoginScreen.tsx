@@ -41,7 +41,7 @@ import Logo from '../../../assets/Images/login_logo.svg';
 import messaging from '@react-native-firebase/messaging';
 import { sendFcmToken } from "../../Store/Slices/authSlice";
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { GOOGLE_CLIENT_ID,GOOGLE_API_KEY } from "@env";
+import { GOOGLE_CLIENT_ID,GOOGLE_API_KEY , GOOGLE_REVERSED_CLIENT_ID,IOS_CLIENT_ID} from "@env";
 import { authorize } from 'react-native-app-auth';
 import {
   LoginManager,
@@ -80,9 +80,12 @@ useEffect(() => {
 //   },
 // };
 useEffect(() => {
+  console.log(GOOGLE_REVERSED_CLIENT_ID,"GOOGLE_REVERSED_CLIENT_ID");
+  
   GoogleSignin.configure({
     webClientId: GOOGLE_CLIENT_ID, // from Firebase
     offlineAccess: true,
+    iosClientId:IOS_CLIENT_ID
   });
 }, []);
 const handleGoogleLogin = async () => {
@@ -127,8 +130,8 @@ const isSignedIn = !!currentUser;
       }
 
       // ✅ FCM
-      const fcmToken = await messaging().getToken();
-
+      // const fcmToken = await messaging().getToken();
+const fcmToken = await getFcmToken();
       if (userId && fcmToken) {
         await dispatch(
           sendFcmToken({
