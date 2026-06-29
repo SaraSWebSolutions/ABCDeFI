@@ -5,6 +5,8 @@ import {
   StyleSheet,
   Text,
   ImageBackground,
+  Platform,
+  PermissionsAndroid,
 } from "react-native";
 
 import { useResponsive } from "../Utils/Responsive";
@@ -28,8 +30,15 @@ export const SplashScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     loadData();
+    requestPermission()
   }, []);
-
+const requestPermission = async () => {
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    );
+  }
+};
   const loadData = async () => {
     try {
       await dispatch(fetchSplash()).unwrap();
